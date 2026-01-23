@@ -17,7 +17,7 @@ import type { Message, Conversation } from '../../core/types';
                 <section class="nes-container is-dark is-rounded flex items-center justify-between p-1">
                     <div class="flex items-center gap-1">
                         <i class="nes-icon coin is-small"></i>
-                        <span style="color: #92cc41;">AlgoChat</span>
+                        <span class="text-success">AlgoChat</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <span class="nes-badge is-splited">
@@ -37,7 +37,7 @@ import type { Message, Conversation } from '../../core/types';
                 <aside class="sidebar">
                     <section class="nes-container is-dark is-rounded h-full flex flex-col overflow-hidden">
                         <div class="flex items-center justify-between mb-1 p-1">
-                            <span class="text-sm" style="color: #f7d51d;">Chats</span>
+                            <span class="text-sm text-warning">Chats</span>
                             <button class="nes-btn is-primary" (click)="showNewChat.set(true)">
                                 <i class="nes-icon is-small star"></i>
                             </button>
@@ -126,18 +126,18 @@ import type { Message, Conversation } from '../../core/types';
 
             <!-- New Chat Dialog -->
             @if (showNewChat()) {
-                <div class="nes-dialog-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100;">
-                    <section class="nes-container is-dark is-rounded" style="width: 90%; max-width: 500px;">
-                        <h3 class="mb-2" style="color: #f7d51d;">New Chat</h3>
+                <div class="nes-dialog-overlay">
+                    <section class="nes-container is-dark is-rounded dialog-box">
+                        <h3 class="mb-2 text-warning">New Chat</h3>
 
                         @if (newChatError()) {
-                            <div class="nes-container is-rounded mb-1" style="background: #e76e55;">
+                            <div class="nes-container is-rounded is-error mb-1">
                                 <p class="text-xs">{{ newChatError() }}</p>
                             </div>
                         }
 
                         <div class="nes-field">
-                            <label style="color: #92cc41;">Recipient Address</label>
+                            <label class="text-success">Recipient Address</label>
                             <input
                                 type="text"
                                 class="nes-input is-dark"

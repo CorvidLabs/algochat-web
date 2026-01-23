@@ -14,19 +14,19 @@ import { WalletService } from '../../core/services/wallet.service';
                     <h1 class="text-center mb-2">
                         <i class="nes-icon coin is-large"></i>
                     </h1>
-                    <h2 class="text-center mb-2" style="color: #92cc41;">AlgoChat</h2>
+                    <h2 class="text-center mb-2 text-success">AlgoChat</h2>
                     <p class="text-center text-sm text-muted mb-2">
                         Encrypted messaging on Algorand
                     </p>
 
                     @if (error()) {
-                        <div class="nes-container is-rounded" style="background: #e76e55; margin-bottom: 1rem;">
+                        <div class="nes-container is-rounded is-error mb-2">
                             <p class="text-xs">{{ error() }}</p>
                         </div>
                     }
 
                     <div class="nes-field">
-                        <label for="mnemonic" style="color: #f7d51d;">25-Word Mnemonic</label>
+                        <label for="mnemonic">25-Word Mnemonic</label>
                         <textarea
                             id="mnemonic"
                             class="nes-textarea is-dark"
@@ -53,11 +53,11 @@ import { WalletService } from '../../core/services/wallet.service';
 
                     @if (generatedMnemonic()) {
                         <div class="nes-container is-dark is-rounded mt-2">
-                            <p class="text-xs" style="color: #f7d51d;">New Account Generated:</p>
-                            <p class="text-xs mb-1" style="word-break: break-all;">
+                            <p class="text-xs text-warning">New Account Generated:</p>
+                            <p class="text-xs mb-1 word-break">
                                 {{ generatedAddress() }}
                             </p>
-                            <p class="text-xs" style="color: #92cc41; word-break: break-all;">
+                            <p class="text-xs text-success word-break">
                                 {{ generatedMnemonic() }}
                             </p>
                             <p class="text-xs text-muted mt-2">

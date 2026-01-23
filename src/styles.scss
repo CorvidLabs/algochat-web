@@ -4,15 +4,96 @@
 /* Press Start 2P font */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-:root {
-    --nes-primary: #209cee;
-    --nes-success: #92cc41;
-    --nes-warning: #f7d51d;
-    --nes-error: #e76e55;
-    --nes-dark: #212529;
-    --nes-bg: #1a1a2e;
-    --nes-bg-dark: #0f0f1a;
+// ============================================
+// Theme Variables (CorvidLabs Style)
+// ============================================
+
+$nes-pixel-size: 4px;
+
+// Corvid Theme (Default)
+:root,
+.corvid-theme {
+    --theme-primary-bg: #11111b;
+    --theme-secondary-bg: #1a1a2e;
+    --theme-section-bg: #16161e;
+    --theme-primary-text: #f9e9c8;
+    --theme-secondary-text: #a9a9a9;
+    --theme-primary-accent: #f9e9c8;
+    --theme-secondary-accent: #92cc41;
+    --theme-border-color: #0d1019;
+    --theme-shadow-color: rgba(0, 0, 0, 0.7);
+    --theme-success: #92cc41;
+    --theme-warning: #f7d51d;
+    --theme-error: #e76e55;
+    --theme-primary: #209cee;
 }
+
+// Arcade Theme
+.arcade-theme {
+    --theme-primary-bg: #000000;
+    --theme-secondary-bg: #1a1a1a;
+    --theme-section-bg: #0d0d0d;
+    --theme-primary-text: #00ffea;
+    --theme-secondary-text: #00cc99;
+    --theme-primary-accent: #ff00ff;
+    --theme-secondary-accent: #00ff00;
+    --theme-border-color: #404040;
+    --theme-shadow-color: rgba(255, 0, 255, 0.3);
+    --theme-success: #00ff00;
+    --theme-warning: #ffff00;
+    --theme-error: #ff0000;
+    --theme-primary: #00ffea;
+}
+
+// Cyberpunk Theme
+.cyberpunk-theme {
+    --theme-primary-bg: #0a0e27;
+    --theme-secondary-bg: #1a1f3a;
+    --theme-section-bg: #0f1433;
+    --theme-primary-text: #00fff9;
+    --theme-secondary-text: #ff00ff;
+    --theme-primary-accent: #ff00ff;
+    --theme-secondary-accent: #00fff9;
+    --theme-border-color: #ff00ff;
+    --theme-shadow-color: rgba(255, 0, 255, 0.5);
+    --theme-success: #00ff9f;
+    --theme-warning: #ffff00;
+    --theme-error: #ff3366;
+    --theme-primary: #00fff9;
+}
+
+// Green Matrix Theme
+.green-theme {
+    --theme-primary-bg: #0d0d0d;
+    --theme-secondary-bg: #1a1a1a;
+    --theme-section-bg: #0f0f0f;
+    --theme-primary-text: #00ff00;
+    --theme-secondary-text: #00cc00;
+    --theme-primary-accent: #00ff00;
+    --theme-secondary-accent: #33ff33;
+    --theme-border-color: #003300;
+    --theme-shadow-color: rgba(0, 255, 0, 0.3);
+    --theme-success: #00ff00;
+    --theme-warning: #ccff00;
+    --theme-error: #ff3300;
+    --theme-primary: #00ff00;
+}
+
+// ============================================
+// Pixel Border Mixin
+// ============================================
+
+@mixin pixel-border($color: var(--theme-border-color)) {
+    box-shadow:
+        $nes-pixel-size 0 0 $color,
+        calc($nes-pixel-size * -1) 0 0 $color,
+        0 $nes-pixel-size 0 $color,
+        0 calc($nes-pixel-size * -1) 0 $color;
+}
+
+// ============================================
+// Base Styles
+// ============================================
 
 * {
     box-sizing: border-box;
@@ -28,53 +109,143 @@ body {
     font-family: 'Press Start 2P', cursive;
     font-size: 12px;
     line-height: 1.8;
-    background: var(--nes-dark);
-    color: #fff;
+    background: var(--theme-primary-bg);
+    color: var(--theme-primary-text);
 }
 
-/* Dark theme for NES.css containers */
+// ============================================
+// NES.css Overrides with Theme Variables
+// ============================================
+
 .nes-container {
-    background: var(--nes-bg);
+    background-color: var(--theme-section-bg);
+    border-color: var(--theme-border-color);
+    color: var(--theme-primary-text);
 
     &.is-dark {
-        background: var(--nes-bg-dark);
+        background-color: var(--theme-secondary-bg);
+        border-color: var(--theme-border-color);
+        color: var(--theme-primary-text);
+    }
+
+    &.is-rounded {
+        border-radius: 0;
+        @include pixel-border(var(--theme-border-color));
+    }
+
+    &.is-error {
+        background-color: var(--theme-error);
+        color: #fff;
+    }
+
+    &::before,
+    &::after {
+        border-color: var(--theme-border-color);
     }
 }
 
-/* Custom scrollbar */
+.nes-btn {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.65rem;
+    color: var(--theme-primary-text);
+    background-color: var(--theme-secondary-bg);
+    border-color: var(--theme-border-color);
+
+    &:hover {
+        background-color: var(--theme-section-bg);
+    }
+
+    &.is-primary {
+        color: var(--theme-primary-bg) !important;
+        background-color: var(--theme-primary-accent) !important;
+    }
+
+    &.is-success {
+        color: #000 !important;
+        background-color: var(--theme-success) !important;
+    }
+
+    &.is-warning {
+        color: #000 !important;
+        background-color: var(--theme-warning) !important;
+    }
+
+    &.is-error {
+        color: #fff !important;
+        background-color: var(--theme-error) !important;
+    }
+
+    &.is-disabled,
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.nes-input,
+.nes-textarea {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    background-color: var(--theme-primary-bg);
+    color: var(--theme-primary-text);
+    border-color: var(--theme-border-color);
+
+    &.is-dark {
+        background-color: var(--theme-secondary-bg);
+        color: var(--theme-primary-text);
+    }
+
+    &::placeholder {
+        color: var(--theme-secondary-text);
+    }
+}
+
+.nes-textarea {
+    resize: none;
+}
+
+.nes-badge {
+    &.is-splited span {
+        font-size: 8px;
+        padding: 4px 8px;
+    }
+
+    .is-dark {
+        background-color: var(--theme-secondary-bg);
+        color: var(--theme-primary-text);
+    }
+
+    .is-primary {
+        background-color: var(--theme-primary-accent);
+        color: var(--theme-primary-bg);
+    }
+}
+
+// ============================================
+// Custom Scrollbar
+// ============================================
+
 ::-webkit-scrollbar {
     width: 12px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--nes-bg-dark);
+    background: var(--theme-primary-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #444;
-    border: 2px solid var(--nes-bg-dark);
-}
+    background: var(--theme-border-color);
+    border: 2px solid var(--theme-primary-bg);
 
-/* Message bubbles */
-.message-bubble {
-    max-width: 70%;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-
-    &.sent {
-        margin-left: auto;
-        background: var(--nes-success);
-        color: #000;
-    }
-
-    &.received {
-        margin-right: auto;
-        background: var(--nes-bg);
-        color: #fff;
+    &:hover {
+        background: var(--theme-secondary-text);
     }
 }
 
-/* Layout helpers */
+// ============================================
+// Layout Helpers
+// ============================================
+
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .flex-1 { flex: 1; }
@@ -91,7 +262,13 @@ body {
 .mt-2 { margin-top: 1rem; }
 .text-xs { font-size: 8px; }
 .text-sm { font-size: 10px; }
-.text-muted { color: #888; }
+.text-muted { color: var(--theme-secondary-text); }
+.text-success { color: var(--theme-success); }
+.text-warning { color: var(--theme-warning); }
+.text-error { color: var(--theme-error); }
+.text-primary { color: var(--theme-primary); }
+.text-accent { color: var(--theme-primary-accent); }
+.word-break { word-break: break-all; }
 .text-center { text-align: center; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .h-full { height: 100%; }
@@ -99,7 +276,10 @@ body {
 .overflow-auto { overflow: auto; }
 .overflow-hidden { overflow: hidden; }
 
-/* App layout */
+// ============================================
+// App Layout
+// ============================================
+
 .app-container {
     display: flex;
     flex-direction: column;
@@ -132,38 +312,137 @@ body {
     min-width: 0;
 }
 
-/* Forms */
+// ============================================
+// Message Bubbles
+// ============================================
+
+.message-bubble {
+    max-width: 70%;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    @include pixel-border(var(--theme-border-color));
+
+    &.sent {
+        margin-left: auto;
+        background: var(--theme-success);
+        color: #000;
+        @include pixel-border(#5a7d28);
+    }
+
+    &.received {
+        margin-right: auto;
+        background: var(--theme-section-bg);
+        color: var(--theme-primary-text);
+    }
+}
+
+.reply-quote {
+    font-size: 8px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 4px solid var(--theme-primary-accent);
+}
+
+// ============================================
+// Conversation List
+// ============================================
+
+.conversation-item {
+    padding: 0.75rem;
+    cursor: pointer;
+    border-bottom: 2px solid var(--theme-border-color);
+    transition: background 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active {
+        background: var(--theme-primary-accent);
+        color: var(--theme-primary-bg);
+    }
+}
+
+// ============================================
+// Empty State
+// ============================================
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--theme-secondary-text);
+
+    i {
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+}
+
+// ============================================
+// Login Screen
+// ============================================
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    background: var(--theme-primary-bg);
+}
+
+.login-box {
+    width: 100%;
+    max-width: 500px;
+}
+
+// ============================================
+// Forms
+// ============================================
+
 .nes-field {
     margin-bottom: 1rem;
 
     label {
         display: block;
         margin-bottom: 0.5rem;
-        color: var(--nes-warning);
+        color: var(--theme-warning);
     }
 }
 
-.nes-textarea {
-    font-family: 'Press Start 2P', cursive;
-    font-size: 10px;
-    resize: none;
+// ============================================
+// Dialog Overlay
+// ============================================
+
+.nes-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
 }
 
-.nes-input {
-    font-family: 'Press Start 2P', cursive;
-    font-size: 10px;
+.dialog-box {
+    width: 90%;
+    max-width: 500px;
 }
 
-/* Reply quote */
-.reply-quote {
-    font-size: 8px;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-left: 4px solid var(--nes-primary);
-}
+// ============================================
+// Loading Animation
+// ============================================
 
-/* Loading animation */
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -173,64 +452,31 @@ body {
     animation: blink 1s infinite;
 }
 
-/* Conversation list item */
-.conversation-item {
-    padding: 0.75rem;
-    cursor: pointer;
-    border-bottom: 2px solid #333;
-    transition: background 0.2s;
+// ============================================
+// Pixel Corners (8-bit style)
+// ============================================
 
-    &:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    &.active {
-        background: var(--nes-primary);
-        color: #fff;
-    }
+.pixel-corners {
+    clip-path: polygon(
+        0px 4px,
+        4px 4px,
+        4px 0px,
+        calc(100% - 4px) 0px,
+        calc(100% - 4px) 4px,
+        100% 4px,
+        100% calc(100% - 4px),
+        calc(100% - 4px) calc(100% - 4px),
+        calc(100% - 4px) 100%,
+        4px 100%,
+        4px calc(100% - 4px),
+        0px calc(100% - 4px)
+    );
 }
 
-/* Empty state */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    text-align: center;
-    color: #666;
+// ============================================
+// Responsive - Tablet
+// ============================================
 
-    i {
-        margin-bottom: 1rem;
-    }
-}
-
-/* Login screen */
-.login-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-}
-
-.login-box {
-    width: 100%;
-    max-width: 500px;
-}
-
-/* Header badge fix */
-.nes-badge.is-splited {
-    min-width: 140px;
-
-    span {
-        font-size: 8px;
-        padding: 4px 8px;
-    }
-}
-
-/* Responsive - Tablet */
 @media (max-width: 900px) {
     .app-container {
         padding: 0.5rem;
@@ -245,7 +491,10 @@ body {
     }
 }
 
-/* Responsive - Mobile */
+// ============================================
+// Responsive - Mobile
+// ============================================
+
 @media (max-width: 768px) {
     body {
         font-size: 10px;
@@ -279,13 +528,9 @@ body {
         max-width: 90%;
     }
 
-    .nes-badge.is-splited {
-        min-width: 100px;
-
-        span {
-            font-size: 6px;
-            padding: 2px 4px;
-        }
+    .nes-badge.is-splited span {
+        font-size: 6px;
+        padding: 2px 4px;
     }
 
     .text-xs {
@@ -296,7 +541,6 @@ body {
         font-size: 8px;
     }
 
-    /* Hide sidebar when chat selected on very small screens */
     .conversation-item {
         padding: 0.5rem;
     }
@@ -327,7 +571,10 @@ body {
     }
 }
 
-/* Responsive - Small Mobile */
+// ============================================
+// Responsive - Small Mobile
+// ============================================
+
 @media (max-width: 480px) {
     body {
         font-size: 8px;
