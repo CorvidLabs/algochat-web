@@ -257,22 +257,30 @@ export class ChatComponent implements OnInit {
         const address = this.selectedAddress();
         const message = this.newMessage().trim();
 
+        console.log('[sendMessage] To:', address);
+        console.log('[sendMessage] Message:', message);
+
         if (!address || !message) return;
 
         // Auto-publish our key if not yet published and we have balance
         if (!this.keyPublished() && this.canPublishKey()) {
+            console.log('[sendMessage] Auto-publishing key...');
             await this.publishKey();
         }
 
         // Find recipient public key
         const conv = this.conversations().find((c) => c.participant === address);
         let pubKey = conv?.participantPublicKey;
+        console.log('[sendMessage] Key from conversation cache:', !!pubKey);
 
         if (!pubKey) {
+            console.log('[sendMessage] Discovering public key...');
             pubKey = (await this.chatService.discoverPublicKey(address)) ?? undefined;
+            console.log('[sendMessage] Discovered key:', !!pubKey);
         }
 
         if (!pubKey) {
+            console.log('[sendMessage] No key found, showing alert');
             alert(
                 'Cannot find recipient\'s encryption key.\n\n' +
                 'They need to publish their key first by clicking the star button in their header, ' +

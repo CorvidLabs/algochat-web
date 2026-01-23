@@ -136,18 +136,27 @@ export class ChatService {
     }
 
     async discoverPublicKey(address: string): Promise<Uint8Array | null> {
+        console.log('[discoverPublicKey] Looking up:', address);
+
         // If looking up our own address, return our key directly
         const account = this.wallet.account();
+        console.log('[discoverPublicKey] Our address:', account?.address);
+        console.log('[discoverPublicKey] Match self?', account && address === account.address);
+
         if (account && address === account.address) {
+            console.log('[discoverPublicKey] Returning own key directly');
             return account.encryptionKeys.publicKey;
         }
 
         try {
+            console.log('[discoverPublicKey] Querying indexer...');
             const response = await this.indexerClient
                 .searchForTransactions()
                 .address(address)
                 .limit(200)
                 .do();
+
+            console.log('[discoverPublicKey] Found transactions:', response.transactions?.length ?? 0);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             for (const tx of (response.transactions || []) as any[]) {
@@ -158,14 +167,17 @@ export class ChatService {
 
                 try {
                     const envelope = decodeEnvelope(noteBytes);
+                    console.log('[discoverPublicKey] Found key in tx:', tx.id);
                     return envelope.senderPublicKey;
                 } catch {
                     continue;
                 }
             }
 
+            console.log('[discoverPublicKey] No key found');
             return null;
-        } catch {
+        } catch (err) {
+            console.error('[discoverPublicKey] Error:', err);
             return null;
         }
     }
