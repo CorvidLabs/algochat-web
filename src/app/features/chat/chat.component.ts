@@ -39,12 +39,12 @@ import type { Message, Conversation } from '../../core/types';
                         } @else {
                             <button
                                 class="nes-btn is-warning"
-                                [class.is-disabled]="publishing() || !canPublishKey() || keyPublished() === null"
-                                [disabled]="publishing() || !canPublishKey() || keyPublished() === null"
-                                [title]="keyPublished() === null ? 'Checking...' : (canPublishKey() ? 'Publish your key so others can message you' : 'Need ALGO to publish key')"
+                                [class.is-disabled]="publishing() || !canPublishKey()"
+                                [disabled]="publishing() || !canPublishKey()"
+                                [title]="canPublishKey() ? 'Publish your key so others can message you' : 'Need at least 0.1 ALGO'"
                                 (click)="publishKey()"
                             >
-                                @if (publishing() || keyPublished() === null) {
+                                @if (publishing()) {
                                     <span class="loading-dots">...</span>
                                 } @else {
                                     <i class="nes-icon is-small star"></i>
