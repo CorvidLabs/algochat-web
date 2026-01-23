@@ -19,11 +19,13 @@ import type { Message, Conversation } from '../../core/types';
                         <i class="nes-icon coin is-small"></i>
                         <span class="text-success">AlgoChat</span>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <span class="nes-badge is-splited">
-                            <span class="is-dark">Balance</span>
-                            <span class="is-primary">{{ formattedBalance() }}</span>
-                        </span>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="text-xs cursor-pointer"
+                            title="Click to copy address"
+                            (click)="copyAddress()"
+                        >{{ truncateAddress(wallet.address()) }}</span>
+                        <span class="text-xs text-primary">{{ formattedBalance() }}</span>
                         <button class="nes-btn is-error" (click)="disconnect()">
                             <i class="nes-icon close is-small"></i>
                         </button>
@@ -164,7 +166,7 @@ import type { Message, Conversation } from '../../core/types';
     `,
 })
 export class ChatComponent implements OnInit {
-    private readonly wallet = inject(WalletService);
+    protected readonly wallet = inject(WalletService);
     private readonly chatService = inject(ChatService);
     private readonly router = inject(Router);
 
@@ -302,5 +304,9 @@ export class ChatComponent implements OnInit {
     protected truncateAddress(address: string): string {
         if (address.length <= 12) return address;
         return address.slice(0, 6) + '...' + address.slice(-4);
+    }
+
+    protected async copyAddress(): Promise<void> {
+        await navigator.clipboard.writeText(this.wallet.address());
     }
 }
