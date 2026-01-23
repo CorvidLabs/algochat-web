@@ -34,6 +34,23 @@ import type { Message, Conversation } from '../../core/types';
                                 <span>{{ truncateAddress(wallet.address()) }}</span>
                             }
                         </button>
+                        @if (keyPublished() === false) {
+                            <button
+                                class="nes-btn is-warning"
+                                [class.is-disabled]="publishing() || balance() < 100000n"
+                                [disabled]="publishing() || balance() < 100000n"
+                                [title]="balance() < 100000n ? 'Need ALGO to publish key' : 'Publish your key so others can message you'"
+                                (click)="publishKey()"
+                            >
+                                @if (publishing()) {
+                                    <span class="loading-dots">...</span>
+                                } @else {
+                                    <i class="nes-icon is-small star"></i>
+                                }
+                            </button>
+                        } @else if (keyPublished() === true) {
+                            <span class="nes-text is-success text-xs" title="Key published - others can message you">OK</span>
+                        }
                         <span class="nes-text is-primary text-xs">{{ formattedBalance() }}</span>
                         <button class="nes-btn is-error" title="Disconnect" (click)="disconnect()">
                             <i class="nes-icon close is-small"></i>
@@ -188,6 +205,8 @@ export class ChatComponent implements OnInit {
     protected readonly newChatAddress = signal('');
     protected readonly newChatError = signal<string | null>(null);
     protected readonly addressCopied = signal(false);
+    protected readonly keyPublished = signal<boolean | null>(null); // null = checking
+    protected readonly publishing = signal(false);
 
     protected readonly formattedBalance = computed(() => {
         const bal = this.balance();
@@ -208,13 +227,15 @@ export class ChatComponent implements OnInit {
     }
 
     private async loadData(): Promise<void> {
-        const [conversations, balance] = await Promise.all([
+        const [conversations, balance, hasKey] = await Promise.all([
             this.chatService.fetchConversations(),
             this.chatService.getBalance(),
+            this.chatService.hasPublishedKey(),
         ]);
 
         this.conversations.set(conversations);
         this.balance.set(balance);
+        this.keyPublished.set(hasKey);
     }
 
     protected async selectConversation(conv: Conversation): Promise<void> {
@@ -245,8 +266,17 @@ export class ChatComponent implements OnInit {
         }
 
         if (!pubKey) {
-            alert('Could not find recipient public key. They need to send a message first.');
+            alert(
+                'Cannot find recipient\'s encryption key.\n\n' +
+                'They need to publish their key first by clicking the key icon in their header, ' +
+                'or send a message to someone.'
+            );
             return;
+        }
+
+        // Auto-publish our key if not yet published and we have balance
+        if (!this.keyPublished() && this.balance() > 100_000n) {
+            await this.publishKey();
         }
 
         const txid = await this.chatService.sendMessage(address, pubKey, message);
@@ -320,5 +350,20 @@ export class ChatComponent implements OnInit {
         await navigator.clipboard.writeText(this.wallet.address());
         this.addressCopied.set(true);
         setTimeout(() => this.addressCopied.set(false), 1500);
+    }
+
+    protected async publishKey(): Promise<void> {
+        if (this.publishing()) return;
+
+        this.publishing.set(true);
+        const txid = await this.chatService.publishKey();
+        this.publishing.set(false);
+
+        if (txid) {
+            this.keyPublished.set(true);
+            // Refresh balance after transaction
+            const balance = await this.chatService.getBalance();
+            this.balance.set(balance);
+        }
     }
 }

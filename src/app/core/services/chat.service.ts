@@ -164,6 +164,56 @@ export class ChatService {
         }
     }
 
+    async hasPublishedKey(): Promise<boolean> {
+        const account = this.wallet.account();
+        if (!account) return false;
+
+        const pubKey = await this.discoverPublicKey(account.address);
+        return pubKey !== null;
+    }
+
+    async publishKey(): Promise<string | null> {
+        const account = this.wallet.account();
+        if (!account) {
+            this.error.set('Not connected');
+            return null;
+        }
+
+        this.loading.set(true);
+        this.error.set(null);
+
+        try {
+            // Send a self-transaction with our public key embedded
+            const envelope = encryptMessage(
+                'key-publish',
+                account.encryptionKeys.privateKey,
+                account.encryptionKeys.publicKey,
+                account.encryptionKeys.publicKey // encrypt to self
+            );
+
+            const note = encodeEnvelope(envelope);
+            const params = await this.algodClient.getTransactionParams().do();
+
+            const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                sender: account.address,
+                receiver: account.address, // self-transaction
+                amount: 0,
+                note,
+                suggestedParams: params,
+            });
+
+            const signedTxn = txn.signTxn(account.account.sk);
+            const { txid } = await this.algodClient.sendRawTransaction(signedTxn).do();
+
+            return txid;
+        } catch (err) {
+            this.error.set(err instanceof Error ? err.message : 'Failed to publish key');
+            return null;
+        } finally {
+            this.loading.set(false);
+        }
+    }
+
     async getBalance(): Promise<bigint> {
         const account = this.wallet.account();
         if (!account) return 0n;
