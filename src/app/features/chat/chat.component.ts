@@ -34,22 +34,22 @@ import type { Message, Conversation } from '../../core/types';
                                 <span>{{ truncateAddress(wallet.address()) }}</span>
                             }
                         </button>
-                        @if (keyPublished() === false) {
+                        @if (keyPublished() === true) {
+                            <span class="nes-text is-success text-xs" title="Key published - others can message you">OK</span>
+                        } @else {
                             <button
                                 class="nes-btn is-warning"
-                                [class.is-disabled]="publishing() || !canPublishKey()"
-                                [disabled]="publishing() || !canPublishKey()"
-                                [title]="canPublishKey() ? 'Publish your key so others can message you' : 'Need ALGO to publish key'"
+                                [class.is-disabled]="publishing() || !canPublishKey() || keyPublished() === null"
+                                [disabled]="publishing() || !canPublishKey() || keyPublished() === null"
+                                [title]="keyPublished() === null ? 'Checking...' : (canPublishKey() ? 'Publish your key so others can message you' : 'Need ALGO to publish key')"
                                 (click)="publishKey()"
                             >
-                                @if (publishing()) {
+                                @if (publishing() || keyPublished() === null) {
                                     <span class="loading-dots">...</span>
                                 } @else {
                                     <i class="nes-icon is-small star"></i>
                                 }
                             </button>
-                        } @else if (keyPublished() === true) {
-                            <span class="nes-text is-success text-xs" title="Key published - others can message you">OK</span>
                         }
                         <span class="nes-text is-primary text-xs">{{ formattedBalance() }}</span>
                         <button class="nes-btn is-error" title="Disconnect" (click)="disconnect()">
@@ -259,6 +259,11 @@ export class ChatComponent implements OnInit {
 
         if (!address || !message) return;
 
+        // Auto-publish our key if not yet published and we have balance
+        if (!this.keyPublished() && this.canPublishKey()) {
+            await this.publishKey();
+        }
+
         // Find recipient public key
         const conv = this.conversations().find((c) => c.participant === address);
         let pubKey = conv?.participantPublicKey;
@@ -270,15 +275,10 @@ export class ChatComponent implements OnInit {
         if (!pubKey) {
             alert(
                 'Cannot find recipient\'s encryption key.\n\n' +
-                'They need to publish their key first by clicking the key icon in their header, ' +
+                'They need to publish their key first by clicking the star button in their header, ' +
                 'or send a message to someone.'
             );
             return;
-        }
-
-        // Auto-publish our key if not yet published and we have balance
-        if (!this.keyPublished() && this.canPublishKey()) {
-            await this.publishKey();
         }
 
         const txid = await this.chatService.sendMessage(address, pubKey, message);
