@@ -1,0 +1,275 @@
+import { Injectable, inject, signal } from '@angular/core';
+import algosdk from 'algosdk';
+import { WalletService } from './wallet.service';
+import { encryptMessage, decryptMessage, encodeEnvelope, decodeEnvelope, isChatMessage } from '../crypto';
+import type { Message, Conversation } from '../types';
+
+const TESTNET_ALGOD = 'https://testnet-api.algonode.cloud';
+const TESTNET_INDEXER = 'https://testnet-idx.algonode.cloud';
+
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+    private readonly wallet = inject(WalletService);
+    private readonly algodClient = new algosdk.Algodv2('', TESTNET_ALGOD, '');
+    private readonly indexerClient = new algosdk.Indexer('', TESTNET_INDEXER, '');
+
+    readonly loading = signal(false);
+    readonly error = signal<string | null>(null);
+
+    async sendMessage(
+        recipientAddress: string,
+        recipientPublicKey: Uint8Array,
+        message: string
+    ): Promise<string | null> {
+        const account = this.wallet.account();
+        if (!account) {
+            this.error.set('Not connected');
+            return null;
+        }
+
+        this.loading.set(true);
+        this.error.set(null);
+
+        try {
+            const envelope = encryptMessage(
+                message,
+                account.encryptionKeys.privateKey,
+                account.encryptionKeys.publicKey,
+                recipientPublicKey
+            );
+
+            const note = encodeEnvelope(envelope);
+            const params = await this.algodClient.getTransactionParams().do();
+
+            const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                sender: account.address,
+                receiver: recipientAddress,
+                amount: 1000,
+                note,
+                suggestedParams: params,
+            });
+
+            const signedTxn = txn.signTxn(account.account.sk);
+            const { txid } = await this.algodClient.sendRawTransaction(signedTxn).do();
+
+            return txid;
+        } catch (err) {
+            this.error.set(err instanceof Error ? err.message : 'Failed to send message');
+            return null;
+        } finally {
+            this.loading.set(false);
+        }
+    }
+
+    async fetchMessages(participantAddress: string, limit = 50): Promise<Message[]> {
+        const account = this.wallet.account();
+        if (!account) return [];
+
+        this.loading.set(true);
+        this.error.set(null);
+
+        try {
+            const response = await this.indexerClient
+                .searchForTransactions()
+                .address(account.address)
+                .limit(limit)
+                .do();
+
+            const messages: Message[] = [];
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const tx of (response.transactions || []) as any[]) {
+                if (tx.txType !== 'pay' || !tx.note) continue;
+
+                const noteBytes = base64ToBytes(tx.note);
+                if (!isChatMessage(noteBytes)) continue;
+
+                const sender: string = tx.sender;
+                const receiver: string | undefined = tx.paymentTransaction?.receiver;
+                if (!receiver) continue;
+
+                let direction: 'sent' | 'received';
+
+                if (sender === account.address) {
+                    if (receiver !== participantAddress) continue;
+                    direction = 'sent';
+                } else {
+                    if (sender !== participantAddress) continue;
+                    if (receiver !== account.address) continue;
+                    direction = 'received';
+                }
+
+                try {
+                    const envelope = decodeEnvelope(noteBytes);
+                    const decrypted = decryptMessage(
+                        envelope,
+                        account.encryptionKeys.privateKey,
+                        account.encryptionKeys.publicKey
+                    );
+
+                    if (!decrypted) continue;
+
+                    messages.push({
+                        id: tx.id,
+                        sender,
+                        recipient: receiver,
+                        content: decrypted.text,
+                        timestamp: new Date((tx.roundTime ?? 0) * 1000),
+                        confirmedRound: tx.confirmedRound ?? 0,
+                        direction,
+                        replyContext: decrypted.replyToId
+                            ? { messageId: decrypted.replyToId, preview: decrypted.replyToPreview || '' }
+                            : undefined,
+                    });
+                } catch {
+                    continue;
+                }
+            }
+
+            return messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        } catch (err) {
+            this.error.set(err instanceof Error ? err.message : 'Failed to fetch messages');
+            return [];
+        } finally {
+            this.loading.set(false);
+        }
+    }
+
+    async discoverPublicKey(address: string): Promise<Uint8Array | null> {
+        try {
+            const response = await this.indexerClient
+                .searchForTransactions()
+                .address(address)
+                .limit(200)
+                .do();
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const tx of (response.transactions || []) as any[]) {
+                if (tx.sender !== address || !tx.note) continue;
+
+                const noteBytes = base64ToBytes(tx.note);
+                if (!isChatMessage(noteBytes)) continue;
+
+                try {
+                    const envelope = decodeEnvelope(noteBytes);
+                    return envelope.senderPublicKey;
+                } catch {
+                    continue;
+                }
+            }
+
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    async getBalance(): Promise<bigint> {
+        const account = this.wallet.account();
+        if (!account) return 0n;
+
+        try {
+            const info = await this.algodClient.accountInformation(account.address).do();
+            return info.amount;
+        } catch {
+            return 0n;
+        }
+    }
+
+    async fetchConversations(): Promise<Conversation[]> {
+        const account = this.wallet.account();
+        if (!account) return [];
+
+        try {
+            const response = await this.indexerClient
+                .searchForTransactions()
+                .address(account.address)
+                .limit(100)
+                .do();
+
+            const conversationsMap = new Map<string, Conversation>();
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const tx of (response.transactions || []) as any[]) {
+                if (tx.txType !== 'pay' || !tx.note) continue;
+
+                const noteBytes = base64ToBytes(tx.note);
+                if (!isChatMessage(noteBytes)) continue;
+
+                const sender: string = tx.sender;
+                const receiver: string | undefined = tx.paymentTransaction?.receiver;
+                if (!receiver) continue;
+
+                // Skip self-transactions (key publish)
+                if (sender === receiver) continue;
+
+                const otherParty = sender === account.address ? receiver : sender;
+                const direction: 'sent' | 'received' = sender === account.address ? 'sent' : 'received';
+
+                try {
+                    const envelope = decodeEnvelope(noteBytes);
+                    const decrypted = decryptMessage(
+                        envelope,
+                        account.encryptionKeys.privateKey,
+                        account.encryptionKeys.publicKey
+                    );
+
+                    if (!decrypted) continue;
+
+                    const message: Message = {
+                        id: tx.id,
+                        sender,
+                        recipient: receiver,
+                        content: decrypted.text,
+                        timestamp: new Date((tx.roundTime ?? 0) * 1000),
+                        confirmedRound: tx.confirmedRound ?? 0,
+                        direction,
+                    };
+
+                    if (!conversationsMap.has(otherParty)) {
+                        conversationsMap.set(otherParty, {
+                            participant: otherParty,
+                            messages: [],
+                        });
+                    }
+
+                    conversationsMap.get(otherParty)!.messages.push(message);
+
+                    // Store public key if we received a message
+                    if (direction === 'received') {
+                        const conv = conversationsMap.get(otherParty)!;
+                        conv.participantPublicKey = envelope.senderPublicKey;
+                    }
+                } catch {
+                    continue;
+                }
+            }
+
+            // Sort messages and conversations
+            const conversations = Array.from(conversationsMap.values());
+            for (const conv of conversations) {
+                conv.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+            }
+
+            // Sort by most recent message
+            conversations.sort((a, b) => {
+                const aLast = a.messages[a.messages.length - 1]?.timestamp.getTime() ?? 0;
+                const bLast = b.messages[b.messages.length - 1]?.timestamp.getTime() ?? 0;
+                return bLast - aLast;
+            });
+
+            return conversations;
+        } catch {
+            return [];
+        }
+    }
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+}

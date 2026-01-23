@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>AlgoChat - Encrypted Messaging on Algorand</title>
+    <base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="End-to-end encrypted messaging on the Algorand blockchain">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body class="is-dark">
+    <app-root></app-root>
+    <script>
+        // Handle SPA redirect from 404.html (GitHub Pages)
+        (function() {
+            var redirect = sessionStorage.getItem('spa-redirect');
+            if (redirect) {
+                sessionStorage.removeItem('spa-redirect');
+                try {
+                    var data = JSON.parse(redirect);
+                    var basePath = document.querySelector('base').href;
+                    var basePathName = new URL(basePath).pathname;
+                    var targetPath = data.path.replace(basePathName, '/') || '/';
+                    if (targetPath !== '/' && targetPath !== window.location.pathname) {
+                        history.replaceState(null, '', targetPath + data.search + data.hash);
+                    }
+                } catch (e) {
+                    console.error('SPA redirect error:', e);
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

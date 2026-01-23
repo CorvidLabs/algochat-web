@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AlgoChat</title>
+    <script>
+        // Single Page App redirect for GitHub Pages
+        // Stores the path in sessionStorage and redirects to index.html
+        // The Angular app will read this and navigate to the correct route
+        const path = window.location.pathname;
+        const search = window.location.search;
+        const hash = window.location.hash;
+
+        sessionStorage.setItem('spa-redirect', JSON.stringify({
+            path: path,
+            search: search,
+            hash: hash
+        }));
+
+        // Redirect to base path
+        const basePath = '/algochat-web/';
+        window.location.replace(basePath);
+    </script>
+</head>
+<body>
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=/algochat-web/">
+    </noscript>
+</body>
+</html>

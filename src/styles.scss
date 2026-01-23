@@ -1,0 +1,357 @@
+/* NES.css */
+@import 'nes.css/css/nes.min.css';
+
+/* Press Start 2P font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+    --nes-primary: #209cee;
+    --nes-success: #92cc41;
+    --nes-warning: #f7d51d;
+    --nes-error: #e76e55;
+    --nes-dark: #212529;
+    --nes-bg: #1a1a2e;
+    --nes-bg-dark: #0f0f1a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+body {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    line-height: 1.8;
+    background: var(--nes-dark);
+    color: #fff;
+}
+
+/* Dark theme for NES.css containers */
+.nes-container {
+    background: var(--nes-bg);
+
+    &.is-dark {
+        background: var(--nes-bg-dark);
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--nes-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border: 2px solid var(--nes-bg-dark);
+}
+
+/* Message bubbles */
+.message-bubble {
+    max-width: 70%;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+
+    &.sent {
+        margin-left: auto;
+        background: var(--nes-success);
+        color: #000;
+    }
+
+    &.received {
+        margin-right: auto;
+        background: var(--nes-bg);
+        color: #fff;
+    }
+}
+
+/* Layout helpers */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.m-0 { margin: 0; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mt-2 { margin-top: 1rem; }
+.text-xs { font-size: 8px; }
+.text-sm { font-size: 10px; }
+.text-muted { color: #888; }
+.text-center { text-align: center; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.h-full { height: 100%; }
+.w-full { width: 100%; }
+.overflow-auto { overflow: auto; }
+.overflow-hidden { overflow: hidden; }
+
+/* App layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.app-header {
+    margin-bottom: 1rem;
+}
+
+.app-main {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 280px;
+    flex-shrink: 0;
+}
+
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Forms */
+.nes-field {
+    margin-bottom: 1rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--nes-warning);
+    }
+}
+
+.nes-textarea {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    resize: none;
+}
+
+.nes-input {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+}
+
+/* Reply quote */
+.reply-quote {
+    font-size: 8px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 4px solid var(--nes-primary);
+}
+
+/* Loading animation */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.loading-dots {
+    animation: blink 1s infinite;
+}
+
+/* Conversation list item */
+.conversation-item {
+    padding: 0.75rem;
+    cursor: pointer;
+    border-bottom: 2px solid #333;
+    transition: background 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active {
+        background: var(--nes-primary);
+        color: #fff;
+    }
+}
+
+/* Empty state */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: #666;
+
+    i {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Login screen */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* Header badge fix */
+.nes-badge.is-splited {
+    min-width: 140px;
+
+    span {
+        font-size: 8px;
+        padding: 4px 8px;
+    }
+}
+
+/* Responsive - Tablet */
+@media (max-width: 900px) {
+    .app-container {
+        padding: 0.5rem;
+    }
+
+    .sidebar {
+        width: 220px;
+    }
+
+    .message-bubble {
+        max-width: 85%;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    body {
+        font-size: 10px;
+    }
+
+    .app-container {
+        padding: 0.25rem;
+    }
+
+    .app-header {
+        margin-bottom: 0.5rem;
+    }
+
+    .app-main {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .sidebar {
+        width: 100%;
+        max-height: 30vh;
+        min-height: 120px;
+    }
+
+    .chat-area {
+        min-height: 0;
+        flex: 1;
+    }
+
+    .message-bubble {
+        max-width: 90%;
+    }
+
+    .nes-badge.is-splited {
+        min-width: 100px;
+
+        span {
+            font-size: 6px;
+            padding: 2px 4px;
+        }
+    }
+
+    .text-xs {
+        font-size: 6px;
+    }
+
+    .text-sm {
+        font-size: 8px;
+    }
+
+    /* Hide sidebar when chat selected on very small screens */
+    .conversation-item {
+        padding: 0.5rem;
+    }
+
+    .empty-state {
+        padding: 1rem;
+
+        i.is-large {
+            transform: scale(0.7);
+        }
+    }
+
+    .login-container {
+        padding: 1rem;
+    }
+
+    .login-box {
+        max-width: 100%;
+    }
+
+    .nes-container {
+        padding: 0.75rem;
+    }
+
+    .nes-textarea,
+    .nes-input {
+        font-size: 8px;
+    }
+}
+
+/* Responsive - Small Mobile */
+@media (max-width: 480px) {
+    body {
+        font-size: 8px;
+    }
+
+    .app-header .nes-container {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .nes-badge.is-splited {
+        display: none;
+    }
+
+    .sidebar {
+        max-height: 25vh;
+    }
+
+    .nes-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 8px;
+    }
+
+    .nes-dialog-overlay section {
+        width: 95% !important;
+        padding: 0.5rem;
+    }
+}
