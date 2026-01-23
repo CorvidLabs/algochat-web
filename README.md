@@ -60,7 +60,7 @@ src/app/
 
 ## Protocol
 
-Implements the [AlgoChat Protocol v1](https://github.com/CorvidLabs/algochat-protocol).
+Implements the [AlgoChat Protocol v1](https://github.com/CorvidLabs/protocol-algochat).
 
 ### Cryptographic Primitives
 
@@ -79,7 +79,7 @@ Implements the [AlgoChat Protocol v1](https://github.com/CorvidLabs/algochat-pro
 
 ## Related Projects
 
-- [algochat-protocol](https://github.com/CorvidLabs/algochat-protocol) - Protocol specification
+- [protocol-algochat](https://github.com/CorvidLabs/protocol-algochat) - Protocol specification
 - [ts-algochat](https://github.com/CorvidLabs/ts-algochat) - TypeScript implementation
 - [swift-algochat](https://github.com/CorvidLabs/swift-algochat) - Swift implementation
 
