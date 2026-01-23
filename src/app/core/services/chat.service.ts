@@ -268,12 +268,6 @@ export class ChatService {
                 const receiver: string | undefined = tx.paymentTransaction?.receiver;
                 if (!receiver) continue;
 
-                // Skip self-transactions (key publish)
-                if (sender === receiver) continue;
-
-                const otherParty = sender === account.address ? receiver : sender;
-                const direction: 'sent' | 'received' = sender === account.address ? 'sent' : 'received';
-
                 try {
                     const envelope = decodeEnvelope(noteBytes);
                     const decrypted = decryptMessage(
@@ -283,6 +277,12 @@ export class ChatService {
                     );
 
                     if (!decrypted) continue;
+
+                    // Skip key-publish transactions (self-tx with "key-publish" content)
+                    if (sender === receiver && decrypted.text === 'key-publish') continue;
+
+                    const otherParty = sender === account.address ? receiver : sender;
+                    const direction: 'sent' | 'received' = sender === account.address ? 'sent' : 'received';
 
                     const message: Message = {
                         id: tx.id,
