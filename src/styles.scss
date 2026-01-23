@@ -155,6 +155,34 @@ body {
         background-color: var(--theme-section-bg);
     }
 
+    &.address-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 8px;
+        padding: 0.25rem 0.5rem;
+        background-color: var(--theme-section-bg);
+        transition: background-color 0.2s, transform 0.1s;
+
+        &:hover {
+            background-color: var(--theme-secondary-bg);
+            transform: scale(1.02);
+        }
+
+        &:active {
+            transform: scale(0.98);
+        }
+
+        &.copied {
+            background-color: var(--theme-success) !important;
+            color: #000 !important;
+        }
+
+        i.nes-icon {
+            margin-right: 0;
+        }
+    }
+
     &.is-primary {
         color: var(--theme-primary-bg) !important;
         background-color: var(--theme-primary-accent) !important;

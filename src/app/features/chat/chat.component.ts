@@ -19,14 +19,23 @@ import type { Message, Conversation } from '../../core/types';
                         <i class="nes-icon coin is-small"></i>
                         <span class="text-success">AlgoChat</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span
-                            class="text-xs cursor-pointer"
-                            title="Click to copy address"
+                    <div class="flex items-center gap-1">
+                        <button
+                            class="nes-btn address-chip"
+                            [class.copied]="addressCopied()"
+                            title="Copy address"
                             (click)="copyAddress()"
-                        >{{ truncateAddress(wallet.address()) }}</span>
-                        <span class="text-xs text-primary">{{ formattedBalance() }}</span>
-                        <button class="nes-btn is-error" (click)="disconnect()">
+                        >
+                            @if (addressCopied()) {
+                                <i class="nes-icon is-small trophy"></i>
+                                <span>Copied!</span>
+                            } @else {
+                                <i class="nes-icon is-small coin"></i>
+                                <span>{{ truncateAddress(wallet.address()) }}</span>
+                            }
+                        </button>
+                        <span class="nes-text is-primary text-xs">{{ formattedBalance() }}</span>
+                        <button class="nes-btn is-error" title="Disconnect" (click)="disconnect()">
                             <i class="nes-icon close is-small"></i>
                         </button>
                     </div>
@@ -178,6 +187,7 @@ export class ChatComponent implements OnInit {
     protected readonly showNewChat = signal(false);
     protected readonly newChatAddress = signal('');
     protected readonly newChatError = signal<string | null>(null);
+    protected readonly addressCopied = signal(false);
 
     protected readonly formattedBalance = computed(() => {
         const bal = this.balance();
@@ -308,5 +318,7 @@ export class ChatComponent implements OnInit {
 
     protected async copyAddress(): Promise<void> {
         await navigator.clipboard.writeText(this.wallet.address());
+        this.addressCopied.set(true);
+        setTimeout(() => this.addressCopied.set(false), 1500);
     }
 }
