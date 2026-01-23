@@ -37,9 +37,9 @@ import type { Message, Conversation } from '../../core/types';
                         @if (keyPublished() === false) {
                             <button
                                 class="nes-btn is-warning"
-                                [class.is-disabled]="publishing() || balance() < 100000n"
-                                [disabled]="publishing() || balance() < 100000n"
-                                [title]="balance() < 100000n ? 'Need ALGO to publish key' : 'Publish your key so others can message you'"
+                                [class.is-disabled]="publishing() || !canPublishKey()"
+                                [disabled]="publishing() || !canPublishKey()"
+                                [title]="canPublishKey() ? 'Publish your key so others can message you' : 'Need ALGO to publish key'"
                                 (click)="publishKey()"
                             >
                                 @if (publishing()) {
@@ -208,6 +208,8 @@ export class ChatComponent implements OnInit {
     protected readonly keyPublished = signal<boolean | null>(null); // null = checking
     protected readonly publishing = signal(false);
 
+    protected readonly canPublishKey = computed(() => this.balance() >= 100_000n);
+
     protected readonly formattedBalance = computed(() => {
         const bal = this.balance();
         return (Number(bal) / 1_000_000).toFixed(3) + ' ALGO';
@@ -275,7 +277,7 @@ export class ChatComponent implements OnInit {
         }
 
         // Auto-publish our key if not yet published and we have balance
-        if (!this.keyPublished() && this.balance() > 100_000n) {
+        if (!this.keyPublished() && this.canPublishKey()) {
             await this.publishKey();
         }
 
