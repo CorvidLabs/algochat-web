@@ -36,6 +36,16 @@ import { WalletService } from '../../core/services/wallet.service';
                         ></textarea>
                     </div>
 
+                    <label class="mb-1">
+                        <input
+                            type="checkbox"
+                            class="nes-checkbox is-dark"
+                            [checked]="rememberMe()"
+                            (change)="rememberMe.set($any($event.target).checked)"
+                        />
+                        <span class="text-xs">Remember me</span>
+                    </label>
+
                     <button
                         class="nes-btn is-primary w-full"
                         [class.is-disabled]="!mnemonic().trim()"
@@ -80,6 +90,7 @@ export class LoginComponent {
     private readonly router = inject(Router);
 
     protected readonly mnemonic = signal('');
+    protected readonly rememberMe = signal(false);
     protected readonly error = signal<string | null>(null);
     protected readonly generatedMnemonic = signal<string | null>(null);
     protected readonly generatedAddress = signal<string | null>(null);
@@ -95,7 +106,7 @@ export class LoginComponent {
             return;
         }
 
-        const success = this.wallet.connect(words);
+        const success = this.wallet.connect(words, this.rememberMe());
         if (success) {
             this.router.navigate(['/chat']);
         } else {

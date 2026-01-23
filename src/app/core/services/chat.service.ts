@@ -109,6 +109,11 @@ export class ChatService {
 
                     if (!decrypted) continue;
 
+                    // Skip key-publish messages
+                    if (decrypted.text === 'key-publish') continue;
+
+                    console.log('[fetchMessages] Found message:', decrypted.text.substring(0, 20));
+
                     messages.push({
                         id: tx.id,
                         sender,

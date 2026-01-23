@@ -9,7 +9,8 @@ export interface ChatAccount {
     encryptionKeys: X25519KeyPair;
 }
 
-const STORAGE_KEY = 'algochat_session';
+const SESSION_KEY = 'algochat_session';
+const PERSIST_KEY = 'algochat_persist';
 
 @Injectable({ providedIn: 'root' })
 export class WalletService {
@@ -23,7 +24,7 @@ export class WalletService {
         this.restoreSession();
     }
 
-    connect(mnemonic: string): boolean {
+    connect(mnemonic: string, remember = false): boolean {
         try {
             const account = algosdk.mnemonicToSecretKey(mnemonic);
             const seed = account.sk.slice(0, 32);
@@ -37,8 +38,14 @@ export class WalletService {
 
             this._account.set(chatAccount);
 
-            // Store encrypted mnemonic in session (not localStorage for security)
-            sessionStorage.setItem(STORAGE_KEY, mnemonic);
+            // Store mnemonic - localStorage if remember, sessionStorage otherwise
+            if (remember) {
+                localStorage.setItem(PERSIST_KEY, mnemonic);
+                sessionStorage.removeItem(SESSION_KEY);
+            } else {
+                sessionStorage.setItem(SESSION_KEY, mnemonic);
+                localStorage.removeItem(PERSIST_KEY);
+            }
 
             return true;
         } catch {
@@ -48,13 +55,17 @@ export class WalletService {
 
     disconnect(): void {
         this._account.set(null);
-        sessionStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(PERSIST_KEY);
     }
 
     private restoreSession(): void {
-        const mnemonic = sessionStorage.getItem(STORAGE_KEY);
+        // Check localStorage first (persisted), then sessionStorage
+        const mnemonic = localStorage.getItem(PERSIST_KEY) ?? sessionStorage.getItem(SESSION_KEY);
         if (mnemonic) {
-            this.connect(mnemonic);
+            // Restore with same persistence setting
+            const isPersisted = localStorage.getItem(PERSIST_KEY) !== null;
+            this.connect(mnemonic, isPersisted);
         }
     }
 
