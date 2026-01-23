@@ -136,6 +136,12 @@ export class ChatService {
     }
 
     async discoverPublicKey(address: string): Promise<Uint8Array | null> {
+        // If looking up our own address, return our key directly
+        const account = this.wallet.account();
+        if (account && address === account.address) {
+            return account.encryptionKeys.publicKey;
+        }
+
         try {
             const response = await this.indexerClient
                 .searchForTransactions()
