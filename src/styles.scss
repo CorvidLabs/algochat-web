@@ -812,6 +812,53 @@ body {
     }
 }
 
+// Sidebar footer for blocked contacts link
+.sidebar-footer {
+    border-top: 2px solid var(--theme-border-color);
+    margin-top: auto;
+}
+
+.blocked-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 9px;
+
+    i.nes-icon {
+        transform: scale(0.5);
+    }
+}
+
+// Blocked contacts dialog
+.blocked-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.blocked-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-bottom: 2px solid var(--theme-border-color);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.blocked-info {
+    flex: 1;
+    min-width: 0;
+
+    p {
+        margin: 0;
+    }
+}
+
 // ============================================
 // Responsive - Small Mobile
 // ============================================

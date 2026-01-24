@@ -104,6 +104,18 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                 </div>
                             }
                         </div>
+
+                        @if (blockedCount() > 0) {
+                            <div class="sidebar-footer p-1">
+                                <button
+                                    class="nes-btn is-error blocked-btn"
+                                    (click)="showBlockedContacts.set(true)"
+                                >
+                                    <i class="nes-icon close is-small"></i>
+                                    {{ blockedCount() }} blocked
+                                </button>
+                            </div>
+                        }
                     </section>
                 </aside>
 
@@ -245,6 +257,38 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                     (close)="closeContactSettings()"
                 />
             }
+
+            <!-- Blocked Contacts Dialog -->
+            @if (showBlockedContacts()) {
+                <div class="nes-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="blocked-title" (click)="onBlockedOverlayClick($event)">
+                    <section class="nes-container is-dark is-rounded dialog-box">
+                        <h3 id="blocked-title" class="mb-2 text-warning">Blocked Contacts</h3>
+
+                        <div class="blocked-list">
+                            @for (address of blockedAddresses(); track address) {
+                                <div class="blocked-item">
+                                    <div class="blocked-info">
+                                        <p class="text-xs">{{ contactSettings.getDisplayName(address) }}</p>
+                                        <p class="text-xs text-muted word-break">{{ address }}</p>
+                                    </div>
+                                    <button
+                                        class="nes-btn is-success"
+                                        (click)="unblockContact(address)"
+                                    >
+                                        Unblock
+                                    </button>
+                                </div>
+                            } @empty {
+                                <p class="text-xs text-muted text-center">No blocked contacts</p>
+                            }
+                        </div>
+
+                        <div class="flex justify-center mt-2">
+                            <button class="nes-btn" (click)="showBlockedContacts.set(false)">Close</button>
+                        </div>
+                    </section>
+                </div>
+            }
         </div>
     `,
 })
@@ -268,6 +312,18 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly sendAmount = signal<number | null>(null);
     protected readonly showContactSettings = signal(false);
     protected readonly contactSettingsAddress = signal<string | null>(null);
+    protected readonly showBlockedContacts = signal(false);
+
+    protected readonly blockedCount = computed(() => {
+        // Access settings to trigger reactivity
+        this.contactSettings.settings();
+        return this.contactSettings.getBlocked().length;
+    });
+
+    protected readonly blockedAddresses = computed(() => {
+        this.contactSettings.settings();
+        return this.contactSettings.getBlocked();
+    });
 
     protected readonly filteredConversations = computed(() => {
         const settings = this.contactSettings.settings();
@@ -562,6 +618,20 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (this.longPressTimer) {
             clearTimeout(this.longPressTimer);
             this.longPressTimer = undefined;
+        }
+    }
+
+    protected onBlockedOverlayClick(event: MouseEvent): void {
+        if ((event.target as HTMLElement).classList.contains('nes-dialog-overlay')) {
+            this.showBlockedContacts.set(false);
+        }
+    }
+
+    protected unblockContact(address: string): void {
+        this.contactSettings.toggleBlocked(address);
+        // Close dialog if no more blocked contacts
+        if (this.blockedCount() === 0) {
+            this.showBlockedContacts.set(false);
         }
     }
 }
