@@ -4,14 +4,14 @@ import { WalletService } from './wallet.service';
 import { encryptMessage, decryptMessage, encodeEnvelope, decodeEnvelope, isChatMessage } from '../crypto';
 import type { Message, Conversation } from '../types';
 
-const TESTNET_ALGOD = 'https://testnet-api.algonode.cloud';
-const TESTNET_INDEXER = 'https://testnet-idx.algonode.cloud';
+const MAINNET_ALGOD = 'https://mainnet-api.algonode.cloud';
+const MAINNET_INDEXER = 'https://mainnet-idx.algonode.cloud';
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
     private readonly wallet = inject(WalletService);
-    private readonly algodClient = new algosdk.Algodv2('', TESTNET_ALGOD, '');
-    private readonly indexerClient = new algosdk.Indexer('', TESTNET_INDEXER, '');
+    private readonly algodClient = new algosdk.Algodv2('', MAINNET_ALGOD, '');
+    private readonly indexerClient = new algosdk.Indexer('', MAINNET_INDEXER, '');
 
     readonly loading = signal(false);
     readonly error = signal<string | null>(null);
