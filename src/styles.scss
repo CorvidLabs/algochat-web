@@ -423,6 +423,7 @@ i.nes-icon {
     max-width: 70%;
     margin-bottom: 1rem;
     padding: 1rem;
+    padding-bottom: calc(1rem + 4px); // Extra space for pixel border
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -730,6 +731,7 @@ i.nes-icon {
     .message-bubble {
         max-width: 90%;
         padding: 0.5rem;
+        padding-bottom: calc(0.5rem + 4px); // Extra space for pixel border
         margin-bottom: 0.5rem;
     }
 
