@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -78,9 +78,9 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     [class.active]="selectedAddress() === conv.participant"
                                     (click)="selectConversation(conv)"
                                 >
-                                    <p class="text-xs truncate">{{ truncateAddress(conv.participant) }}</p>
+                                    <p class="conv-address truncate">{{ truncateAddress(conv.participant) }}</p>
                                     @if (conv.messages.length > 0) {
-                                        <p class="text-xs text-muted truncate">
+                                        <p class="conv-preview">
                                             {{ conv.messages[conv.messages.length - 1].content }}
                                         </p>
                                     }
@@ -114,7 +114,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                         <div class="reply-quote">{{ msg.replyContext.preview }}</div>
                                     }
                                     <p class="text-sm">{{ msg.content }}</p>
-                                    <p class="text-xs text-muted">{{ msg.timestamp | date:'short' }}</p>
+                                    <p class="message-time">{{ msg.timestamp | date:'short' }}</p>
                                 </div>
                             } @empty {
                                 <div class="empty-state h-full">
@@ -135,7 +135,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     (keydown.enter)="sendMessage($event)"
                                 ></textarea>
                                 <button
-                                    class="nes-btn is-success"
+                                    class="nes-btn is-primary"
                                     [class.is-disabled]="!canSend()"
                                     [disabled]="!canSend()"
                                     (click)="sendMessage()"
@@ -194,7 +194,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
         </div>
     `,
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy {
     protected readonly wallet = inject(WalletService);
     private readonly chatService = inject(ChatService);
     private readonly router = inject(Router);
@@ -211,6 +211,15 @@ export class ChatComponent implements OnInit {
     protected readonly keyPublished = signal<boolean | null>(null); // null = checking
     protected readonly publishing = signal(false);
 
+    // Auto-refresh intervals
+    private balanceInterval?: ReturnType<typeof setInterval>;
+    private conversationsInterval?: ReturnType<typeof setInterval>;
+    private messagesInterval?: ReturnType<typeof setInterval>;
+
+    private static readonly BALANCE_REFRESH_MS = 30_000; // 30 seconds
+    private static readonly CONVERSATIONS_REFRESH_MS = 30_000; // 30 seconds
+    private static readonly MESSAGES_REFRESH_MS = 10_000; // 10 seconds
+
     protected readonly canPublishKey = computed(() => this.balance() >= 100_000n);
 
     protected readonly formattedBalance = computed(() => {
@@ -225,6 +234,69 @@ export class ChatComponent implements OnInit {
     async ngOnInit(): Promise<void> {
         // Auth guard ensures we're connected, so just load data
         await this.loadData();
+        this.startAutoRefresh();
+    }
+
+    ngOnDestroy(): void {
+        this.stopAutoRefresh();
+    }
+
+    private startAutoRefresh(): void {
+        // Auto-refresh balance
+        this.balanceInterval = setInterval(async () => {
+            const balance = await this.chatService.getBalance();
+            this.balance.set(balance);
+        }, ChatComponent.BALANCE_REFRESH_MS);
+
+        // Auto-refresh conversations list
+        this.conversationsInterval = setInterval(async () => {
+            await this.refreshConversations();
+        }, ChatComponent.CONVERSATIONS_REFRESH_MS);
+
+        // Auto-refresh active conversation messages
+        this.messagesInterval = setInterval(async () => {
+            const address = this.selectedAddress();
+            if (address) {
+                await this.refreshMessages(address);
+            }
+        }, ChatComponent.MESSAGES_REFRESH_MS);
+    }
+
+    private stopAutoRefresh(): void {
+        if (this.balanceInterval) {
+            clearInterval(this.balanceInterval);
+            this.balanceInterval = undefined;
+        }
+        if (this.conversationsInterval) {
+            clearInterval(this.conversationsInterval);
+            this.conversationsInterval = undefined;
+        }
+        if (this.messagesInterval) {
+            clearInterval(this.messagesInterval);
+            this.messagesInterval = undefined;
+        }
+    }
+
+    private async refreshConversations(): Promise<void> {
+        const conversations = await this.chatService.fetchConversations();
+        this.conversations.set(conversations);
+
+        // If we have an active conversation, update its messages too
+        const address = this.selectedAddress();
+        if (address) {
+            const activeConv = conversations.find(c => c.participant === address);
+            if (activeConv) {
+                this.selectedMessages.set(activeConv.messages);
+            }
+        }
+    }
+
+    private async refreshMessages(address: string): Promise<void> {
+        const messages = await this.chatService.fetchMessages(address);
+        // Only update if still viewing the same conversation
+        if (this.selectedAddress() === address) {
+            this.selectedMessages.set(messages);
+        }
     }
 
     private async loadData(): Promise<void> {

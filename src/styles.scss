@@ -196,8 +196,8 @@ body {
     }
 
     &.is-primary {
-        color: var(--theme-primary-bg) !important;
-        background-color: var(--theme-primary-accent) !important;
+        color: #fff !important;
+        background-color: var(--theme-primary) !important;
     }
 
     &.is-success {
@@ -256,8 +256,8 @@ body {
     }
 
     .is-primary {
-        background-color: var(--theme-primary-accent);
-        color: var(--theme-primary-bg);
+        background-color: var(--theme-primary);
+        color: #fff;
     }
 }
 
@@ -359,29 +359,50 @@ body {
 .message-bubble {
     max-width: 70%;
     margin-bottom: 1rem;
-    padding: 0.75rem;
+    padding: 1rem;
     @include pixel-border(var(--theme-border-color));
+
+    p.text-sm {
+        font-size: 11px;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+
+    .message-time {
+        font-size: 8px;
+        opacity: 0.7;
+    }
 
     &.sent {
         margin-left: auto;
-        background: var(--theme-success);
-        color: #000;
-        @include pixel-border(#5a7d28);
+        background: var(--theme-primary);
+        color: #fff;
+        @include pixel-border(#1a7ac4);
+
+        .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
     }
 
     &.received {
         margin-right: auto;
-        background: var(--theme-section-bg);
+        background: var(--theme-secondary-bg);
         color: var(--theme-primary-text);
+        @include pixel-border(var(--theme-border-color));
+
+        .message-time {
+            color: var(--theme-secondary-text);
+        }
     }
 }
 
 .reply-quote {
-    font-size: 8px;
+    font-size: 9px;
     padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    background: rgba(0, 0, 0, 0.2);
+    margin-bottom: 0.75rem;
+    background: rgba(0, 0, 0, 0.3);
     border-left: 4px solid var(--theme-primary-accent);
+    border-radius: 2px;
 }
 
 // ============================================
@@ -389,18 +410,37 @@ body {
 // ============================================
 
 .conversation-item {
-    padding: 0.75rem;
+    padding: 1rem;
     cursor: pointer;
     border-bottom: 2px solid var(--theme-border-color);
     transition: background 0.2s;
 
+    .conv-address {
+        font-size: 10px;
+        color: var(--theme-primary-text);
+        margin-bottom: 0.25rem;
+    }
+
+    .conv-preview {
+        font-size: 9px;
+        color: var(--theme-secondary-text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     &:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.08);
     }
 
     &.active {
-        background: var(--theme-primary-accent);
-        color: var(--theme-primary-bg);
+        background: var(--theme-primary);
+        @include pixel-border(#1a7ac4);
+
+        .conv-address,
+        .conv-preview {
+            color: #fff;
+        }
     }
 }
 
