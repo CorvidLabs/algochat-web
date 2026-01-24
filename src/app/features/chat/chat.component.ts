@@ -76,9 +76,9 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
             </header>
 
             <!-- Main -->
-            <main class="app-main">
+            <main class="app-main" [class.fullscreen]="isFullscreen()">
                 <!-- Sidebar -->
-                <aside class="sidebar" [class.mobile-hidden]="selectedAddress()">
+                <aside class="sidebar" [class.mobile-hidden]="selectedAddress()" [class.hidden]="isFullscreen()">
                     <section class="nes-container is-dark is-rounded h-full flex flex-col overflow-hidden">
                         <div class="flex items-center justify-between mb-1 p-1">
                             <span class="text-sm text-warning">Chats</span>
@@ -158,7 +158,18 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                 }
                             </div>
                             <button
-                                class="nes-btn chat-header-menu"
+                                class="nes-btn chat-header-btn"
+                                [title]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'"
+                                (click)="toggleFullscreen()"
+                            >
+                                @if (isFullscreen()) {
+                                    <span>[]</span>
+                                } @else {
+                                    <span>[ ]</span>
+                                }
+                            </button>
+                            <button
+                                class="nes-btn chat-header-btn"
                                 title="Contact settings"
                                 (click)="openContactSettings(selectedAddress()!)"
                             >
@@ -167,7 +178,8 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         </div>
 
                         <!-- Messages -->
-                        <div #messagesContainer class="nes-container is-dark is-rounded flex-1 mb-1 messages-container" (scroll)="onMessagesScroll($event)">
+                        <div class="messages-wrapper">
+                            <div #messagesContainer class="nes-container is-dark is-rounded flex-1 mb-1 messages-container" (scroll)="onMessagesScroll($event)">
                             @if (loadingMoreMessages()) {
                                 <div class="loading-more text-center p-1">
                                     <span class="loading-dots">Loading older messages...</span>
@@ -207,6 +219,16 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     <i class="nes-icon is-large comment"></i>
                                     <p class="text-xs">No messages yet</p>
                                 </div>
+                            }
+                            </div>
+
+                            @if (hasNewMessages()) {
+                                <button
+                                    class="new-messages-btn nes-btn is-primary"
+                                    (click)="scrollToNewMessages()"
+                                >
+                                    New messages
+                                </button>
                             }
                         </div>
 
@@ -417,6 +439,14 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly hasMoreMessages = signal(true);
     protected readonly loadingMoreMessages = signal(false);
 
+    // Fullscreen mode
+    protected readonly isFullscreen = signal(false);
+
+    // New messages indicator
+    protected readonly hasNewMessages = signal(false);
+    private lastSeenMessageId: string | null = null;
+    private isNearBottom = true;
+
     private static readonly SELECTED_CONVO_KEY = 'algochat_selected_conversation';
 
     protected readonly blockedCount = computed(() => {
@@ -535,7 +565,19 @@ export class ChatComponent implements OnInit, OnDestroy {
         const messages = await this.chatService.fetchMessages(address);
         // Only update if still viewing the same conversation
         if (this.selectedAddress() === address) {
+            // Check for new received messages
+            const currentMessages = this.selectedMessages();
+            const currentIds = new Set(currentMessages.map(m => m.id));
+            const newReceivedMessages = messages.filter(
+                m => !currentIds.has(m.id) && m.direction === 'received'
+            );
+
             this.selectedMessages.set(messages);
+
+            // Show indicator if there are new received messages and user isn't at bottom
+            if (newReceivedMessages.length > 0 && !this.isNearBottom) {
+                this.hasNewMessages.set(true);
+            }
         }
     }
 
@@ -885,10 +927,29 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected onMessagesScroll(event: Event): void {
         const container = event.target as HTMLElement;
+
+        // Track if user is near bottom (within 100px)
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        this.isNearBottom = distanceFromBottom < 100;
+
+        // Clear new messages indicator when user scrolls to bottom
+        if (this.isNearBottom && this.hasNewMessages()) {
+            this.hasNewMessages.set(false);
+        }
+
         // If scrolled near top (within 100px), load more
         if (container.scrollTop < 100 && this.hasMoreMessages() && !this.loadingMoreMessages()) {
             this.loadMoreMessages();
         }
+    }
+
+    protected scrollToNewMessages(): void {
+        this.scrollToBottom();
+        this.hasNewMessages.set(false);
+    }
+
+    protected toggleFullscreen(): void {
+        this.isFullscreen.update(v => !v);
     }
 
     protected async loadMoreMessages(): Promise<void> {
@@ -899,14 +960,21 @@ export class ChatComponent implements OnInit, OnDestroy {
 
         const currentMessages = this.selectedMessages();
         // Filter out pending messages (confirmedRound = 0) when finding oldest
-        const confirmedMessages = currentMessages.filter(m => m.confirmedRound > 0);
+        const confirmedMessages = currentMessages.filter(m => {
+            const round = typeof m.confirmedRound === 'bigint' ? Number(m.confirmedRound) : m.confirmedRound;
+            return round > 0;
+        });
         if (confirmedMessages.length === 0) {
             this.loadingMoreMessages.set(false);
             this.hasMoreMessages.set(false);
             return;
         }
 
-        const oldestRound = Math.min(...confirmedMessages.map(m => m.confirmedRound));
+        // Convert BigInt to number for Math.min
+        const rounds = confirmedMessages.map(m =>
+            typeof m.confirmedRound === 'bigint' ? Number(m.confirmedRound) : m.confirmedRound
+        );
+        const oldestRound = Math.min(...rounds);
 
         // Fetch older messages
         const olderMessages = await this.chatService.fetchMessagesBefore(address, oldestRound, 50);

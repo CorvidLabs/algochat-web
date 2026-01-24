@@ -686,6 +686,49 @@ i.nes-icon {
     color: var(--theme-border-color);
 }
 
+// Info menu in header
+.info-menu-wrapper {
+    position: relative;
+}
+
+.info-btn {
+    padding: 0.2rem 0.5rem !important;
+    min-width: auto !important;
+    min-height: auto !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+}
+
+.info-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
+    background: var(--theme-secondary-bg);
+    border: 4px solid var(--theme-border-color);
+    z-index: 50;
+    min-width: 160px;
+
+    .info-menu-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        font-size: 10px;
+        color: var(--theme-primary-text);
+        text-decoration: none;
+        border-bottom: 2px solid var(--theme-border-color);
+        transition: background 0.2s;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:hover {
+            background: var(--theme-section-bg);
+            color: var(--theme-primary);
+        }
+    }
+}
+
 // ============================================
 // Pixel Corners (8-bit style)
 // ============================================
@@ -1092,5 +1135,66 @@ i.nes-icon {
         .nes-btn {
             width: 100%;
         }
+    }
+}
+
+// ============================================
+// Fullscreen Mode
+// ============================================
+
+.app-main.fullscreen {
+    .sidebar {
+        display: none !important;
+    }
+
+    .chat-area {
+        flex: 1;
+        max-width: 100%;
+    }
+}
+
+// Chat header buttons
+.chat-header-btn {
+    padding: 0.25rem 0.5rem;
+    min-width: auto;
+    font-size: 10px;
+}
+
+// ============================================
+// Messages Wrapper & New Messages Button
+// ============================================
+
+.messages-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0.5rem;
+
+    .messages-container {
+        flex: 1;
+        margin-bottom: 0 !important;
+    }
+}
+
+.new-messages-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-size: 10px;
+    padding: 0.5rem 1rem;
+    animation: bounce 1s ease-in-out infinite;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-4px);
     }
 }
