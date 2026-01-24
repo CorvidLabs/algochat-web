@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef, OnInit, OnDestroy, ElementRef, viewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { WalletService } from '../../core/services/wallet.service';
@@ -10,7 +10,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
 
 @Component({
     selector: 'app-chat',
-    imports: [FormsModule, DatePipe, ContactSettingsDialogComponent],
+    imports: [FormsModule, DatePipe, RouterLink, ContactSettingsDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="app-container">
@@ -20,6 +20,20 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                     <div class="flex items-center gap-1">
                         <i class="nes-icon coin is-small hide-mobile"></i>
                         <span class="text-success">AlgoChat</span>
+                        <div class="info-menu-wrapper">
+                            <button
+                                class="nes-btn info-btn"
+                                title="Info & Legal"
+                                (click)="showInfoMenu.set(!showInfoMenu())"
+                            >?</button>
+                            @if (showInfoMenu()) {
+                                <div class="info-menu">
+                                    <a routerLink="/terms" class="info-menu-item" (click)="showInfoMenu.set(false)">Terms of Service</a>
+                                    <a routerLink="/privacy" class="info-menu-item" (click)="showInfoMenu.set(false)">Privacy Policy</a>
+                                    <a href="https://github.com/CorvidLabs/algochat-web" target="_blank" class="info-menu-item">GitHub</a>
+                                </div>
+                            }
+                        </div>
                     </div>
                     <div class="flex items-center gap-1">
                         <button
@@ -392,6 +406,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly failedMessages = signal<Set<string>>(new Set());
     protected readonly contactSettingsAddress = signal<string | null>(null);
     protected readonly showBlockedContacts = signal(false);
+    protected readonly showInfoMenu = signal(false);
 
     // Pagination state
     protected readonly hasMoreMessages = signal(true);
@@ -584,7 +599,7 @@ export class ChatComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Calculate amount in microAlgos (default 0.001 ALGO = 1000 microAlgos)
+        // Calculate amount in microAlgos (default 0 ALGO)
         const amountAlgo = this.sendAmount();
         const amountMicroAlgos = amountAlgo ? Math.floor(amountAlgo * 1_000_000) : undefined;
 
@@ -600,7 +615,7 @@ export class ChatComponent implements OnInit, OnDestroy {
             timestamp: new Date(),
             confirmedRound: 0,
             direction: 'sent',
-            amount: amountMicroAlgos ?? 1000,
+            amount: amountMicroAlgos ?? 0,
         };
 
         this.selectedMessages.update((msgs) => [...msgs, newMsg]);
@@ -668,7 +683,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected hasAmount(msg: Message): boolean {
         if (!msg.amount) return false;
         const amount = typeof msg.amount === 'bigint' ? Number(msg.amount) : msg.amount;
-        return amount >= 1000;
+        return amount > 0;
     }
 
     protected async startNewChat(): Promise<void> {

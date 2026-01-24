@@ -38,7 +38,7 @@ export class ChatService {
                 recipientAddress,
                 recipientPublicKey,
                 message,
-                { amount: amount ?? 1000, waitForConfirmation: true }
+                { amount: amount ?? 0, waitForConfirmation: true }
             );
             return result.txid;
         } catch (err) {
