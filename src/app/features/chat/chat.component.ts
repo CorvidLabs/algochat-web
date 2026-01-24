@@ -81,6 +81,9 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     [class.muted]="contactSettings.isMuted(conv.participant)"
                                     (click)="selectConversation(conv)"
                                     (contextmenu)="onConversationContextMenu($event, conv.participant)"
+                                    (touchstart)="onTouchStart($event, conv.participant)"
+                                    (touchend)="onTouchEnd()"
+                                    (touchmove)="onTouchEnd()"
                                 >
                                     <p class="conv-address truncate">
                                         @if (contactSettings.isFavorite(conv.participant)) {
@@ -542,5 +545,23 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected onConversationContextMenu(event: MouseEvent, address: string): void {
         event.preventDefault();
         this.openContactSettings(address);
+    }
+
+    // Long-press support for mobile
+    private longPressTimer?: ReturnType<typeof setTimeout>;
+    private readonly LONG_PRESS_DURATION = 500; // ms
+
+    protected onTouchStart(event: TouchEvent, address: string): void {
+        this.longPressTimer = setTimeout(() => {
+            event.preventDefault();
+            this.openContactSettings(address);
+        }, this.LONG_PRESS_DURATION);
+    }
+
+    protected onTouchEnd(): void {
+        if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = undefined;
+        }
     }
 }
