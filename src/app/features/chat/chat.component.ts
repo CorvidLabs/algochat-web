@@ -160,9 +160,9 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                         }
                                         <p class="message-content">{{ msg.content }}</p>
                                         <div class="message-footer">
-                                            @if (msg.amount && msg.amount >= 1000) {
+                                            @if (hasAmount(msg)) {
                                                 <span class="message-amount" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
-                                                    {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount) }} ALGO
+                                                    {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount!) }} ALGO
                                                 </span>
                                             }
                                             @if (isPending(msg)) {
@@ -623,6 +623,12 @@ export class ChatComponent implements OnInit, OnDestroy {
         return true;
     }
 
+    protected hasAmount(msg: Message): boolean {
+        if (!msg.amount) return false;
+        const amount = typeof msg.amount === 'bigint' ? Number(msg.amount) : msg.amount;
+        return amount >= 1000;
+    }
+
     protected async startNewChat(): Promise<void> {
         this.newChatError.set(null);
 
@@ -760,9 +766,10 @@ export class ChatComponent implements OnInit, OnDestroy {
         return amount.toFixed(6).replace(/\.?0+$/, '');
     }
 
-    protected formatMicroAlgos(microAlgos: number): string {
-        // Convert microAlgos to ALGO and format
-        const algo = microAlgos / 1_000_000;
+    protected formatMicroAlgos(microAlgos: number | bigint): string {
+        // Convert microAlgos to ALGO and format (handle both number and BigInt)
+        const amount = typeof microAlgos === 'bigint' ? Number(microAlgos) : microAlgos;
+        const algo = amount / 1_000_000;
         return algo.toFixed(6).replace(/\.?0+$/, '');
     }
 
