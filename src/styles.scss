@@ -408,9 +408,33 @@ body {
         white-space: pre-wrap;
     }
 
+    .message-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
     .message-time {
         font-size: 8px;
         opacity: 0.7;
+    }
+
+    .message-amount {
+        font-size: 9px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+
+        &.sent {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.15);
+        }
+
+        &.received {
+            color: #51cf66;
+            background: rgba(81, 207, 102, 0.15);
+        }
     }
 
     &.sent {

@@ -155,7 +155,14 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                         <div class="reply-quote">{{ msg.replyContext.preview }}</div>
                                     }
                                     <p class="text-sm">{{ msg.content }}</p>
-                                    <p class="message-time">{{ msg.timestamp | date:'short' }}</p>
+                                    <div class="message-footer">
+                                        @if (msg.amount && msg.amount > 1000) {
+                                            <span class="message-amount" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
+                                                {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount) }} ALGO
+                                            </span>
+                                        }
+                                        <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
+                                    </div>
                                 </div>
                             } @empty {
                                 <div class="empty-state h-full">
@@ -553,6 +560,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                 timestamp: new Date(),
                 confirmedRound: 0,
                 direction: 'sent',
+                amount: amountMicroAlgos ?? 1000,
             };
 
             this.selectedMessages.update((msgs) => [...msgs, newMsg]);
@@ -694,6 +702,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected formatAlgo(amount: number): string {
         // Format with up to 6 decimals, removing trailing zeros
         return amount.toFixed(6).replace(/\.?0+$/, '');
+    }
+
+    protected formatMicroAlgos(microAlgos: number): string {
+        // Convert microAlgos to ALGO and format
+        const algo = microAlgos / 1_000_000;
+        return algo.toFixed(6).replace(/\.?0+$/, '');
     }
 
     protected cancelAlgoInput(): void {
