@@ -150,7 +150,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         <!-- Messages -->
                         <div class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
                             @for (msg of selectedMessages(); track msg.id) {
-                                @if (msg.content) {
+                                @if (hasContent(msg)) {
                                     <div class="message-bubble nes-container is-rounded"
                                          [class.sent]="msg.direction === 'sent'"
                                          [class.received]="msg.direction === 'received'"
@@ -610,6 +610,17 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected isFailed(msg: Message): boolean {
         return this.failedMessages().has(msg.id);
+    }
+
+    protected hasContent(msg: Message): boolean {
+        // Filter out messages with no content, empty content, or key-publish messages
+        if (!msg.content) return false;
+        if (typeof msg.content !== 'string') return false;
+        const trimmed = msg.content.trim();
+        if (!trimmed) return false;
+        // Filter out key-publish JSON
+        if (trimmed.startsWith('{') && trimmed.includes('key-publish')) return false;
+        return true;
     }
 
     protected async startNewChat(): Promise<void> {
