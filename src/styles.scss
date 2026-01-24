@@ -398,6 +398,7 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
+    overflow: hidden;
     @include pixel-border(var(--theme-border-color));
 
     p.text-sm {
