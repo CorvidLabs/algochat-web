@@ -251,22 +251,14 @@ export class ChatService {
 
     async fetchConversations(): Promise<Conversation[]> {
         const account = this.wallet.account();
-        console.log('[fetchConversations] Account:', account?.address ?? 'null');
-
-        if (!account) {
-            console.log('[fetchConversations] No account, returning empty');
-            return [];
-        }
+        if (!account) return [];
 
         try {
-            console.log('[fetchConversations] Querying indexer for:', account.address);
             const response = await this.indexerClient
                 .searchForTransactions()
                 .address(account.address)
                 .limit(100)
                 .do();
-
-            console.log('[fetchConversations] Found transactions:', response.transactions?.length ?? 0);
 
             const conversationsMap = new Map<string, Conversation>();
 
@@ -339,10 +331,8 @@ export class ChatService {
                 return bLast - aLast;
             });
 
-            console.log('[fetchConversations] Returning', conversations.length, 'conversations');
             return conversations;
-        } catch (err) {
-            console.error('[fetchConversations] Error:', err);
+        } catch {
             return [];
         }
     }
@@ -354,16 +344,13 @@ function base64ToBytes(base64: string | Uint8Array): Uint8Array {
         return base64;
     }
 
-    // If not a string, try to convert
+    // If not a string, return empty
     if (typeof base64 !== 'string') {
-        console.warn('[base64ToBytes] Unexpected type:', typeof base64, base64);
         return new Uint8Array(0);
     }
 
     // Convert base64url to standard base64 (indexer uses base64url encoding)
-    const standardBase64 = base64
-        .replace(/-/g, '+')
-        .replace(/_/g, '/');
+    const standardBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
 
     // Add padding if needed
     const padded = standardBase64 + '='.repeat((4 - (standardBase64.length % 4)) % 4);

@@ -223,13 +223,8 @@ export class ChatComponent implements OnInit {
     });
 
     async ngOnInit(): Promise<void> {
-        console.log('[ChatComponent] ngOnInit, connected:', this.wallet.connected());
-        console.log('[ChatComponent] address:', this.wallet.address());
-
         // Auth guard ensures we're connected, so just load data
-        console.log('[ChatComponent] Loading data...');
         await this.loadData();
-        console.log('[ChatComponent] Data loaded, conversations:', this.conversations().length);
     }
 
     private async loadData(): Promise<void> {

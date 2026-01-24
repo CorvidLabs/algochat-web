@@ -10,13 +10,10 @@ export const authGuard: CanActivateFn = () => {
     const wallet = inject(WalletService);
     const router = inject(Router);
 
-    console.log('[authGuard] Checking auth, connected:', wallet.connected());
-
     if (wallet.connected()) {
         return true;
     }
 
-    console.log('[authGuard] Not authenticated, redirecting to login');
     return router.createUrlTree(['/login']);
 };
 
@@ -28,12 +25,9 @@ export const noAuthGuard: CanActivateFn = () => {
     const wallet = inject(WalletService);
     const router = inject(Router);
 
-    console.log('[noAuthGuard] Checking if already logged in:', wallet.connected());
-
     if (!wallet.connected()) {
         return true;
     }
 
-    console.log('[noAuthGuard] Already authenticated, redirecting to chat');
     return router.createUrlTree(['/chat']);
 };
