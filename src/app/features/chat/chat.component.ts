@@ -213,7 +213,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
 
                                 @if (showAlgoInput() && !sendAmount()) {
                                     <div class="algo-amount-input-row">
-                                        <label for="algo-amount" class="sr-only">ALGO amount</label>
+                                        <label for="algo-amount" class="algo-input-label">Amount:</label>
                                         <input
                                             id="algo-amount"
                                             type="number"
@@ -225,20 +225,21 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                             (keydown.enter)="confirmAlgoAmount()"
                                             (keydown.escape)="cancelAlgoInput()"
                                         />
+                                        <span class="algo-input-label">ALGO</span>
                                         <button
                                             type="button"
                                             class="nes-btn is-success"
                                             [disabled]="!algoInputValue() || algoInputValue()! < 0.001"
                                             (click)="confirmAlgoAmount()"
                                         >
-                                            OK
+                                            Add
                                         </button>
                                         <button
                                             type="button"
                                             class="nes-btn"
                                             (click)="cancelAlgoInput()"
                                         >
-                                            X
+                                            Cancel
                                         </button>
                                     </div>
                                 }

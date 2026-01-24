@@ -806,18 +806,26 @@ body {
 .algo-amount-input-row {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    width: 100%;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--theme-border-color);
 
     .algo-input {
-        width: 80px;
-        font-size: 12px;
-        padding: 0.25rem;
+        width: 100px;
+        font-size: 14px;
+        padding: 0.4rem 0.5rem;
+    }
+
+    .algo-input-label {
+        font-size: 11px;
+        color: var(--theme-secondary-text);
     }
 
     .nes-btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 10px;
+        padding: 0.4rem 0.75rem;
+        font-size: 12px;
         min-width: auto;
     }
 }
