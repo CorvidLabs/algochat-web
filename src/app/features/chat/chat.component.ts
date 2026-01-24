@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { WalletService } from '../../core/services/wallet.service';
 import { ChatService } from '../../core/services/chat.service';
+import { ContactSettingsService } from '../../core/services/contact-settings.service';
+import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
 import type { Message, ConversationData as Conversation } from 'ts-algochat';
 
 @Component({
     selector: 'app-chat',
-    imports: [FormsModule, DatePipe],
+    imports: [FormsModule, DatePipe, ContactSettingsDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="app-container">
@@ -72,13 +74,20 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         </div>
 
                         <div class="flex-1 overflow-auto">
-                            @for (conv of conversations(); track conv.participant) {
+                            @for (conv of filteredConversations(); track conv.participant) {
                                 <div
                                     class="conversation-item"
                                     [class.active]="selectedAddress() === conv.participant"
+                                    [class.muted]="contactSettings.isMuted(conv.participant)"
                                     (click)="selectConversation(conv)"
+                                    (contextmenu)="onConversationContextMenu($event, conv.participant)"
                                 >
-                                    <p class="conv-address truncate">{{ truncateAddress(conv.participant) }}</p>
+                                    <p class="conv-address truncate">
+                                        @if (contactSettings.isFavorite(conv.participant)) {
+                                            <i class="nes-icon is-small star favorite-star"></i>
+                                        }
+                                        {{ contactSettings.getDisplayName(conv.participant) }}
+                                    </p>
                                     @if (conv.messages.length > 0) {
                                         <p class="conv-preview">
                                             {{ conv.messages[conv.messages.length - 1].content }}
@@ -103,7 +112,24 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             <button class="nes-btn mobile-back-btn" (click)="goBack()">
                                 <span>&lt;</span>
                             </button>
-                            <p class="text-xs truncate flex-1">{{ selectedAddress() }}</p>
+                            <div class="flex-1 truncate">
+                                <p class="text-xs">
+                                    @if (contactSettings.isFavorite(selectedAddress()!)) {
+                                        <i class="nes-icon is-small star favorite-star"></i>
+                                    }
+                                    {{ contactSettings.getDisplayName(selectedAddress()!) }}
+                                </p>
+                                @if (contactSettings.getSettings(selectedAddress()!).nickname) {
+                                    <p class="text-xs text-muted">{{ selectedAddress() }}</p>
+                                }
+                            </div>
+                            <button
+                                class="nes-btn chat-header-menu"
+                                title="Contact settings"
+                                (click)="openContactSettings(selectedAddress()!)"
+                            >
+                                <span>...</span>
+                            </button>
                         </div>
 
                         <!-- Messages -->
@@ -143,6 +169,20 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     Send
                                 </button>
                             </div>
+                            <details class="algo-amount-details">
+                                <summary class="text-xs text-muted">+ Add ALGO</summary>
+                                <div class="algo-amount-input">
+                                    <input
+                                        type="number"
+                                        class="nes-input is-dark"
+                                        [(ngModel)]="sendAmount"
+                                        min="0.001"
+                                        step="0.001"
+                                        placeholder="0.001"
+                                    />
+                                    <span class="text-xs">ALGO</span>
+                                </div>
+                            </details>
                         </div>
                     } @else {
                         <div class="nes-container is-dark is-rounded h-full">
@@ -191,6 +231,14 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                     </section>
                 </div>
             }
+
+            <!-- Contact Settings Dialog -->
+            @if (showContactSettings()) {
+                <app-contact-settings-dialog
+                    [address]="contactSettingsAddress()!"
+                    (close)="closeContactSettings()"
+                />
+            }
         </div>
     `,
 })
@@ -198,6 +246,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly wallet = inject(WalletService);
     private readonly chatService = inject(ChatService);
     private readonly router = inject(Router);
+    protected readonly contactSettings = inject(ContactSettingsService);
 
     protected readonly conversations = signal<Conversation[]>([]);
     protected readonly selectedAddress = signal<string | null>(null);
@@ -210,6 +259,24 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly addressCopied = signal(false);
     protected readonly keyPublished = signal<boolean | null>(null); // null = checking
     protected readonly publishing = signal(false);
+    protected readonly sendAmount = signal<number | null>(null);
+    protected readonly showContactSettings = signal(false);
+    protected readonly contactSettingsAddress = signal<string | null>(null);
+
+    protected readonly filteredConversations = computed(() => {
+        const settings = this.contactSettings.settings();
+        return this.conversations()
+            .filter(c => !this.contactSettings.isBlocked(c.participant))
+            .sort((a, b) => {
+                const aFav = this.contactSettings.isFavorite(a.participant) ? 0 : 1;
+                const bFav = this.contactSettings.isFavorite(b.participant) ? 0 : 1;
+                if (aFav !== bFav) return aFav - bFav;
+                // Then by most recent message
+                const aLast = a.messages[a.messages.length - 1]?.timestamp.getTime() ?? 0;
+                const bLast = b.messages[b.messages.length - 1]?.timestamp.getTime() ?? 0;
+                return bLast - aLast;
+            });
+    });
 
     // Auto-refresh intervals
     private balanceInterval?: ReturnType<typeof setInterval>;
@@ -360,10 +427,15 @@ export class ChatComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const txid = await this.chatService.sendMessage(address, pubKey, message);
+        // Calculate amount in microAlgos (default 0.001 ALGO = 1000 microAlgos)
+        const amountAlgo = this.sendAmount();
+        const amountMicroAlgos = amountAlgo ? Math.floor(amountAlgo * 1_000_000) : undefined;
+
+        const txid = await this.chatService.sendMessage(address, pubKey, message, amountMicroAlgos);
 
         if (txid) {
             this.newMessage.set('');
+            this.sendAmount.set(null);
 
             // Add optimistic message
             const newMsg: Message = {
@@ -451,5 +523,20 @@ export class ChatComponent implements OnInit, OnDestroy {
             const balance = await this.chatService.getBalance();
             this.balance.set(balance);
         }
+    }
+
+    protected openContactSettings(address: string): void {
+        this.contactSettingsAddress.set(address);
+        this.showContactSettings.set(true);
+    }
+
+    protected closeContactSettings(): void {
+        this.showContactSettings.set(false);
+        this.contactSettingsAddress.set(null);
+    }
+
+    protected onConversationContextMenu(event: MouseEvent, address: string): void {
+        event.preventDefault();
+        this.openContactSettings(address);
     }
 }

@@ -20,7 +20,8 @@ export class ChatService {
     async sendMessage(
         recipientAddress: string,
         recipientPublicKey: Uint8Array,
-        message: string
+        message: string,
+        amount?: number
     ): Promise<string | null> {
         const account = this.wallet.account();
         if (!account) {
@@ -36,7 +37,8 @@ export class ChatService {
                 account,
                 recipientAddress,
                 recipientPublicKey,
-                message
+                message,
+                amount ? { amount } : undefined
             );
             return result.txid;
         } catch (err) {
