@@ -669,6 +669,23 @@ i.nes-icon {
     margin-bottom: 0.5rem;
 }
 
+// Legal links
+.legal-link {
+    color: var(--theme-secondary-text);
+    text-decoration: none;
+    transition: color 0.2s;
+
+    &:hover {
+        color: var(--theme-primary);
+        text-decoration: underline;
+    }
+}
+
+.legal-separator {
+    margin: 0 0.5rem;
+    color: var(--theme-border-color);
+}
+
 // ============================================
 // Pixel Corners (8-bit style)
 // ============================================

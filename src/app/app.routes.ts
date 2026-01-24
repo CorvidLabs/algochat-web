@@ -13,6 +13,14 @@ export const routes: Routes = [
         canActivate: [authGuard],
     },
     {
+        path: 'terms',
+        loadComponent: () => import('./features/legal/terms.component').then((m) => m.TermsComponent),
+    },
+    {
+        path: 'privacy',
+        loadComponent: () => import('./features/legal/privacy.component').then((m) => m.PrivacyComponent),
+    },
+    {
         path: '',
         redirectTo: 'chat',
         pathMatch: 'full',

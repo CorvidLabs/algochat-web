@@ -1,11 +1,11 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../core/services/wallet.service';
 
 @Component({
     selector: 'app-login',
-    imports: [FormsModule],
+    imports: [FormsModule, RouterLink],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="login-container">
@@ -80,6 +80,11 @@ import { WalletService } from '../../core/services/wallet.service';
                 <p class="text-center text-xs text-muted mt-2">
                     <i class="nes-icon is-small heart"></i>
                     End-to-end encrypted with X25519 + ChaCha20
+                </p>
+                <p class="text-center text-xs text-muted mt-1">
+                    <a routerLink="/terms" class="legal-link">Terms</a>
+                    <span class="legal-separator">|</span>
+                    <a routerLink="/privacy" class="legal-link">Privacy</a>
                 </p>
             </div>
         </div>
