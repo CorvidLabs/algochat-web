@@ -176,31 +176,75 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     (keydown.enter)="sendMessage($event)"
                                 ></textarea>
                                 <button
-                                    class="nes-btn is-primary"
+                                    class="nes-btn"
+                                    [class.is-primary]="!sendAmount()"
+                                    [class.is-success]="sendAmount()"
                                     [class.is-disabled]="!canSend()"
                                     [disabled]="!canSend()"
                                     (click)="sendMessage()"
                                 >
-                                    Send
+                                    @if (sendAmount()) {
+                                        Send {{ sendAmount() }}A
+                                    } @else {
+                                        Send
+                                    }
                                 </button>
                             </div>
-                            <details class="algo-amount-details">
-                                <summary class="text-xs text-muted">+ Add ALGO</summary>
-                                <div class="algo-amount-input">
-                                    <label for="algo-amount" class="sr-only">ALGO amount to send</label>
-                                    <input
-                                        id="algo-amount"
-                                        type="number"
-                                        class="nes-input is-dark"
-                                        [(ngModel)]="sendAmount"
-                                        min="0.001"
-                                        step="0.001"
-                                        placeholder="0.001"
-                                        aria-describedby="algo-amount-hint"
-                                    />
-                                    <span id="algo-amount-hint" class="text-xs">ALGO</span>
-                                </div>
-                            </details>
+                            <div class="algo-amount-row">
+                                @if (sendAmount()) {
+                                    <div class="algo-amount-badge">
+                                        <span class="algo-amount-value">{{ sendAmount() }} ALGO</span>
+                                        <button
+                                            type="button"
+                                            class="algo-amount-clear"
+                                            title="Remove ALGO"
+                                            (click)="sendAmount.set(null)"
+                                        >
+                                            <i class="nes-icon close is-small"></i>
+                                        </button>
+                                    </div>
+                                } @else {
+                                    <button
+                                        type="button"
+                                        class="algo-amount-add"
+                                        (click)="showAlgoInput.set(true)"
+                                    >
+                                        + Add ALGO
+                                    </button>
+                                }
+
+                                @if (showAlgoInput() && !sendAmount()) {
+                                    <div class="algo-amount-input-row">
+                                        <label for="algo-amount" class="sr-only">ALGO amount</label>
+                                        <input
+                                            id="algo-amount"
+                                            type="number"
+                                            class="nes-input is-dark algo-input"
+                                            [(ngModel)]="algoInputValue"
+                                            min="0.001"
+                                            step="0.001"
+                                            placeholder="0.001"
+                                            (keydown.enter)="confirmAlgoAmount()"
+                                            (keydown.escape)="cancelAlgoInput()"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="nes-btn is-success"
+                                            [disabled]="!algoInputValue() || algoInputValue()! < 0.001"
+                                            (click)="confirmAlgoAmount()"
+                                        >
+                                            OK
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="nes-btn"
+                                            (click)="cancelAlgoInput()"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     } @else {
                         <div class="nes-container is-dark is-rounded h-full">
@@ -310,6 +354,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly keyPublished = signal<boolean | null>(null); // null = checking
     protected readonly publishing = signal(false);
     protected readonly sendAmount = signal<number | null>(null);
+    protected readonly showAlgoInput = signal(false);
+    protected readonly algoInputValue = signal<number | null>(null);
     protected readonly showContactSettings = signal(false);
     protected readonly contactSettingsAddress = signal<string | null>(null);
     protected readonly showBlockedContacts = signal(false);
@@ -633,5 +679,19 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (this.blockedCount() === 0) {
             this.showBlockedContacts.set(false);
         }
+    }
+
+    protected confirmAlgoAmount(): void {
+        const value = this.algoInputValue();
+        if (value && value >= 0.001) {
+            this.sendAmount.set(value);
+        }
+        this.showAlgoInput.set(false);
+        this.algoInputValue.set(null);
+    }
+
+    protected cancelAlgoInput(): void {
+        this.showAlgoInput.set(false);
+        this.algoInputValue.set(null);
     }
 }
