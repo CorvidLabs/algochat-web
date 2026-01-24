@@ -10,7 +10,6 @@ import { ContactSettingsService, type ContactSettings } from '../../core/service
         <div class="nes-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="contact-settings-title" (click)="onOverlayClick($event)">
             <section class="nes-container is-dark is-rounded dialog-box contact-settings-dialog">
                 <h3 id="contact-settings-title" class="mb-2 text-warning">Contact Settings</h3>
-                <p class="text-xs text-muted mb-2 word-break">{{ address() }}</p>
 
                 <!-- Nickname -->
                 <div class="nes-field mb-2">
@@ -35,10 +34,7 @@ import { ContactSettingsService, type ContactSettings } from '../../core/service
                             [checked]="currentSettings().isFavorite"
                             (change)="toggleFavorite()"
                         />
-                        <span class="toggle-label">
-                            <i class="nes-icon is-small star"></i>
-                            Favorite
-                        </span>
+                        <span>Favorite</span>
                     </label>
 
                     <label class="settings-toggle">
@@ -48,29 +44,23 @@ import { ContactSettingsService, type ContactSettings } from '../../core/service
                             [checked]="currentSettings().isMuted"
                             (change)="toggleMuted()"
                         />
-                        <span class="toggle-label">
-                            <i class="nes-icon is-small heart is-empty"></i>
-                            Muted
-                        </span>
+                        <span>Muted</span>
                     </label>
 
-                    <label class="settings-toggle settings-toggle-danger">
+                    <label class="settings-toggle text-error">
                         <input
                             type="checkbox"
                             class="nes-checkbox is-dark"
                             [checked]="currentSettings().isBlocked"
                             (change)="toggleBlocked()"
                         />
-                        <span class="toggle-label">
-                            <i class="nes-icon is-small close"></i>
-                            Blocked
-                        </span>
+                        <span>Blocked</span>
                     </label>
                 </div>
 
                 @if (currentSettings().isBlocked) {
                     <div class="nes-container is-rounded is-warning mt-1 p-1">
-                        <p class="text-xs">Blocked contacts are hidden from your conversation list.</p>
+                        <p class="text-xs">Blocked contacts are hidden from your list.</p>
                     </div>
                 }
 

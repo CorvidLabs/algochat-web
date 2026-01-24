@@ -899,24 +899,10 @@ body {
     display: flex;
     align-items: center;
     cursor: pointer;
+    font-size: 12px;
 
     input[type="checkbox"] {
-        margin-right: 0.5rem;
-    }
-
-    .toggle-label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 10px;
-    }
-
-    i.nes-icon {
-        transform: scale(0.6);
-    }
-
-    &.settings-toggle-danger .toggle-label {
-        color: var(--theme-error);
+        margin-right: 0.75rem;
     }
 }
 
