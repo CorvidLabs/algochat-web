@@ -16,7 +16,7 @@ import type { Message, Conversation } from '../../core/types';
             <header class="app-header">
                 <section class="nes-container is-dark is-rounded flex items-center justify-between p-1">
                     <div class="flex items-center gap-1">
-                        <i class="nes-icon coin is-small"></i>
+                        <i class="nes-icon coin is-small hide-mobile"></i>
                         <span class="text-success">AlgoChat</span>
                     </div>
                     <div class="flex items-center gap-1">
@@ -27,15 +27,15 @@ import type { Message, Conversation } from '../../core/types';
                             (click)="copyAddress()"
                         >
                             @if (addressCopied()) {
-                                <i class="nes-icon is-small trophy"></i>
+                                <i class="nes-icon is-small trophy hide-mobile"></i>
                                 <span>Copied!</span>
                             } @else {
-                                <i class="nes-icon is-small coin"></i>
+                                <i class="nes-icon is-small coin hide-mobile"></i>
                                 <span>{{ truncateAddress(wallet.address()) }}</span>
                             }
                         </button>
                         @if (keyPublished() === true) {
-                            <span class="nes-text is-success text-xs" title="Key published - others can message you">OK</span>
+                            <span class="nes-text is-success text-xs hide-mobile" title="Key published - others can message you">OK</span>
                         } @else {
                             <button
                                 class="nes-btn is-warning"
@@ -62,7 +62,7 @@ import type { Message, Conversation } from '../../core/types';
             <!-- Main -->
             <main class="app-main">
                 <!-- Sidebar -->
-                <aside class="sidebar">
+                <aside class="sidebar" [class.mobile-hidden]="selectedAddress()">
                     <section class="nes-container is-dark is-rounded h-full flex flex-col overflow-hidden">
                         <div class="flex items-center justify-between mb-1 p-1">
                             <span class="text-sm text-warning">Chats</span>
@@ -96,11 +96,14 @@ import type { Message, Conversation } from '../../core/types';
                 </aside>
 
                 <!-- Chat Area -->
-                <section class="chat-area">
+                <section class="chat-area" [class.mobile-visible]="selectedAddress()">
                     @if (selectedAddress()) {
                         <!-- Chat Header -->
-                        <div class="nes-container is-dark is-rounded mb-1 p-1">
-                            <p class="text-xs truncate">{{ selectedAddress() }}</p>
+                        <div class="nes-container is-dark is-rounded mb-1 p-1 flex items-center">
+                            <button class="nes-btn mobile-back-btn" (click)="goBack()">
+                                <span>&lt;</span>
+                            </button>
+                            <p class="text-xs truncate flex-1">{{ selectedAddress() }}</p>
                         </div>
 
                         <!-- Messages -->
@@ -355,6 +358,11 @@ export class ChatComponent implements OnInit {
     protected truncateAddress(address: string): string {
         if (address.length <= 12) return address;
         return address.slice(0, 6) + '...' + address.slice(-4);
+    }
+
+    protected goBack(): void {
+        this.selectedAddress.set(null);
+        this.selectedMessages.set([]);
     }
 
     protected async copyAddress(): Promise<void> {

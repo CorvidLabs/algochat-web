@@ -103,6 +103,18 @@ html, body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
+    min-height: 100dvh; // Dynamic viewport height for mobile browsers
+}
+
+// Safe area insets for notched phones
+@supports (padding: env(safe-area-inset-bottom)) {
+    .app-container {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .chat-area .nes-container:last-child {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    }
 }
 
 body {
@@ -529,7 +541,8 @@ body {
     }
 
     .app-container {
-        padding: 0.25rem;
+        padding: 0.5rem;
+        padding-bottom: 0;
     }
 
     .app-header {
@@ -538,22 +551,34 @@ body {
 
     .app-main {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0;
     }
 
+    // Mobile: Full screen sidebar or chat, not both
     .sidebar {
         width: 100%;
-        max-height: 30vh;
-        min-height: 120px;
+        height: 100%;
+        flex: 1;
+
+        &.mobile-hidden {
+            display: none;
+        }
     }
 
     .chat-area {
         min-height: 0;
         flex: 1;
+        display: none;
+
+        &.mobile-visible {
+            display: flex;
+        }
     }
 
     .message-bubble {
         max-width: 90%;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
     }
 
     .nes-badge.is-splited span {
@@ -562,15 +587,20 @@ body {
     }
 
     .text-xs {
-        font-size: 6px;
+        font-size: 7px;
     }
 
     .text-sm {
-        font-size: 8px;
+        font-size: 9px;
     }
 
+    // Larger touch targets
     .conversation-item {
-        padding: 0.5rem;
+        padding: 0.75rem;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .empty-state {
@@ -590,12 +620,42 @@ body {
     }
 
     .nes-container {
-        padding: 0.75rem;
+        padding: 0.5rem;
     }
 
     .nes-textarea,
     .nes-input {
-        font-size: 8px;
+        font-size: 10px;
+        min-height: 44px; // Touch-friendly height
+    }
+
+    .nes-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    // Mobile back button
+    .mobile-back-btn {
+        display: flex !important;
+        align-items: center;
+        gap: 0.25rem;
+        margin-right: 0.5rem;
+    }
+
+    // Hide elements on mobile
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+// Desktop: Hide mobile-only elements
+@media (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
+
+    .mobile-back-btn {
+        display: none !important;
     }
 }
 
@@ -605,7 +665,7 @@ body {
 
 @media (max-width: 480px) {
     body {
-        font-size: 8px;
+        font-size: 9px;
     }
 
     .app-header .nes-container {
@@ -616,17 +676,41 @@ body {
         display: none;
     }
 
-    .sidebar {
-        max-height: 25vh;
-    }
-
     .nes-btn {
         padding: 0.25rem 0.5rem;
         font-size: 8px;
+        min-height: 40px;
+        min-width: 40px;
+    }
+
+    .nes-btn.address-chip {
+        font-size: 6px;
+        padding: 0.2rem 0.4rem;
+        min-height: 32px;
     }
 
     .nes-dialog-overlay section {
         width: 95% !important;
         padding: 0.5rem;
+    }
+
+    .message-bubble {
+        font-size: 9px;
+
+        p.text-sm {
+            font-size: 9px;
+        }
+    }
+
+    // Full-width input area on small screens
+    .chat-area .nes-container:last-child {
+        .flex {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nes-btn {
+            width: 100%;
+        }
     }
 }
