@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef, OnInit, OnDestroy, ElementRef, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -148,7 +148,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         </div>
 
                         <!-- Messages -->
-                        <div class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
+                        <div #messagesContainer class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
                             @for (msg of selectedMessages(); track msg.id) {
                                 @if (hasContent(msg)) {
                                     <div class="message-bubble nes-container is-rounded"
@@ -166,7 +166,10 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                                 </span>
                                             }
                                             @if (isPending(msg)) {
-                                                <span class="message-status pending">Sending...</span>
+                                                <span class="message-status pending">
+                                                    <span class="sending-spinner"></span>
+                                                    Sending...
+                                                </span>
                                             } @else if (isFailed(msg)) {
                                                 <span class="message-status failed">Failed</span>
                                             } @else {
@@ -189,7 +192,8 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                 <textarea
                                     class="nes-textarea is-dark flex-1"
                                     rows="2"
-                                    [(ngModel)]="newMessage"
+                                    [ngModel]="newMessage()"
+                                    (ngModelChange)="newMessage.set($event)"
                                     placeholder="Type a message..."
                                     (keydown.enter)="sendMessage($event)"
                                 ></textarea>
@@ -236,7 +240,8 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                             id="algo-amount"
                                             type="number"
                                             class="nes-input is-dark algo-input"
-                                            [(ngModel)]="algoInputValue"
+                                            [ngModel]="algoInputValue()"
+                                            (ngModelChange)="algoInputValue.set($event)"
                                             min="0.001"
                                             step="0.001"
                                             placeholder="0.001"
@@ -291,7 +296,8 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             <input
                                 type="text"
                                 class="nes-input is-dark"
-                                [(ngModel)]="newChatAddress"
+                                [ngModel]="newChatAddress()"
+                                (ngModelChange)="newChatAddress.set($event)"
                                 placeholder="ALGO..."
                             />
                         </div>
@@ -358,6 +364,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     private readonly chatService = inject(ChatService);
     private readonly router = inject(Router);
     protected readonly contactSettings = inject(ContactSettingsService);
+    private readonly cdr = inject(ChangeDetectorRef);
+
+    private readonly messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
 
     protected readonly conversations = signal<Conversation[]>([]);
     protected readonly selectedAddress = signal<string | null>(null);
@@ -570,6 +579,10 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.newMessage.set('');
         this.sendAmount.set(null);
 
+        // Force change detection and scroll after render
+        this.cdr.detectChanges();
+        this.scrollToBottom();
+
         // Send the message
         try {
             const txid = await this.chatService.sendMessage(address, pubKey, message, amountMicroAlgos);
@@ -776,5 +789,15 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected cancelAlgoInput(): void {
         this.showAlgoInput.set(false);
         this.algoInputValue.set(null);
+    }
+
+    private scrollToBottom(): void {
+        // Use requestAnimationFrame to ensure DOM is fully updated
+        requestAnimationFrame(() => {
+            const container = this.messagesContainer()?.nativeElement;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        });
     }
 }
