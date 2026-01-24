@@ -127,15 +127,15 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             <button class="nes-btn mobile-back-btn" (click)="goBack()">
                                 <span>&lt;</span>
                             </button>
-                            <div class="flex-1 truncate">
-                                <p class="text-xs">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs truncate">
                                     @if (contactSettings.isFavorite(selectedAddress()!)) {
                                         <i class="nes-icon is-small star favorite-star"></i>
                                     }
                                     {{ contactSettings.getDisplayName(selectedAddress()!) }}
                                 </p>
                                 @if (contactSettings.getSettings(selectedAddress()!).nickname) {
-                                    <p class="text-xs text-muted">{{ selectedAddress() }}</p>
+                                    <p class="text-xs text-muted truncate">{{ truncateAddress(selectedAddress()!) }}</p>
                                 }
                             </div>
                             <button

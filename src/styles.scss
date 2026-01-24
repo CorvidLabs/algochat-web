@@ -313,6 +313,7 @@ body {
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .h-full { height: 100%; }
 .w-full { width: 100%; }
+.min-w-0 { min-width: 0; }
 .overflow-auto { overflow: auto; }
 .overflow-hidden { overflow: hidden; }
 
