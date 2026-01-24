@@ -106,8 +106,14 @@ export class ChatService {
         const account = this.wallet.account();
         if (!account) return false;
 
-        const pubKey = await this.discoverPublicKey(account.address);
-        return pubKey !== null;
+        // Don't use discoverPublicKey here - it short-circuits for own address.
+        // We need to actually check on-chain.
+        try {
+            const pubKey = await this.algorand.discoverPublicKey(account.address);
+            return pubKey !== null;
+        } catch {
+            return false;
+        }
     }
 
     async publishKey(): Promise<string | null> {
