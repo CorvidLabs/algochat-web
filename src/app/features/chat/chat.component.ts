@@ -93,6 +93,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     class="conversation-item"
                                     [class.active]="selectedAddress() === conv.participant"
                                     [class.muted]="contactSettings.isMuted(conv.participant)"
+                                    [class.self-chat]="isSelfChat(conv.participant)"
                                     (click)="selectConversation(conv)"
                                     (contextmenu)="onConversationContextMenu($event, conv.participant)"
                                     (touchstart)="onTouchStart($event, conv.participant)"
@@ -100,10 +101,12 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     (touchmove)="onTouchEnd()"
                                 >
                                     <p class="conv-address truncate">
-                                        @if (contactSettings.isFavorite(conv.participant)) {
+                                        @if (isSelfChat(conv.participant)) {
+                                            <i class="nes-icon is-small like favorite-star"></i>
+                                        } @else if (contactSettings.isFavorite(conv.participant)) {
                                             <i class="nes-icon is-small star favorite-star"></i>
                                         }
-                                        {{ contactSettings.getDisplayName(conv.participant) }}
+                                        {{ getDisplayName(conv.participant) }}
                                     </p>
                                     @if (conv.messages.length > 0) {
                                         <p class="conv-preview">
@@ -143,12 +146,14 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             </button>
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs truncate">
-                                    @if (contactSettings.isFavorite(selectedAddress()!)) {
+                                    @if (isSelfChat(selectedAddress()!)) {
+                                        <i class="nes-icon is-small like favorite-star"></i>
+                                    } @else if (contactSettings.isFavorite(selectedAddress()!)) {
                                         <i class="nes-icon is-small star favorite-star"></i>
                                     }
-                                    {{ contactSettings.getDisplayName(selectedAddress()!) }}
+                                    {{ getDisplayName(selectedAddress()!) }}
                                 </p>
-                                @if (contactSettings.getSettings(selectedAddress()!).nickname) {
+                                @if (!isSelfChat(selectedAddress()!) && contactSettings.getSettings(selectedAddress()!).nickname) {
                                     <p class="text-xs text-muted truncate">{{ truncateAddress(selectedAddress()!) }}</p>
                                 }
                             </div>
@@ -427,9 +432,15 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected readonly filteredConversations = computed(() => {
         const settings = this.contactSettings.settings();
+        const myAddress = this.wallet.address();
         return this.conversations()
             .filter(c => !this.contactSettings.isBlocked(c.participant))
             .sort((a, b) => {
+                // Self-chat (Notes) always first
+                const aSelf = a.participant === myAddress ? 0 : 1;
+                const bSelf = b.participant === myAddress ? 0 : 1;
+                if (aSelf !== bSelf) return aSelf - bSelf;
+                // Then favorites
                 const aFav = this.contactSettings.isFavorite(a.participant) ? 0 : 1;
                 const bFav = this.contactSettings.isFavorite(b.participant) ? 0 : 1;
                 if (aFav !== bFav) return aFav - bFav;
@@ -733,6 +744,17 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected truncateAddress(address: string): string {
         if (address.length <= 12) return address;
         return address.slice(0, 6) + '...' + address.slice(-4);
+    }
+
+    protected getDisplayName(address: string): string {
+        if (address === this.wallet.address()) {
+            return 'Notes';
+        }
+        return this.contactSettings.getDisplayName(address);
+    }
+
+    protected isSelfChat(address: string): boolean {
+        return address === this.wallet.address();
     }
 
     protected goBack(): void {
