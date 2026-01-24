@@ -375,20 +375,20 @@ body {
 
     &.sent {
         margin-left: auto;
-        background: var(--theme-primary);
-        color: #fff;
-        @include pixel-border(#1a7ac4);
+        background: #1a3a4a;
+        color: var(--theme-primary-text);
+        @include pixel-border(#0f2530);
 
         .message-time {
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--theme-secondary-text);
         }
     }
 
     &.received {
         margin-right: auto;
-        background: var(--theme-secondary-bg);
+        background: #2a2a3e;
         color: var(--theme-primary-text);
-        @include pixel-border(var(--theme-border-color));
+        @include pixel-border(#1a1a2e);
 
         .message-time {
             color: var(--theme-secondary-text);
@@ -434,12 +434,15 @@ body {
     }
 
     &.active {
-        background: var(--theme-primary);
-        @include pixel-border(#1a7ac4);
+        background: #1a3a4a;
+        @include pixel-border(#0f2530);
 
-        .conv-address,
+        .conv-address {
+            color: var(--theme-primary-accent);
+        }
+
         .conv-preview {
-            color: #fff;
+            color: var(--theme-primary-text);
         }
     }
 }
