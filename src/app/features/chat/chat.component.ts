@@ -148,7 +148,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         </div>
 
                         <!-- Messages -->
-                        <div class="nes-container is-dark is-rounded flex-1 overflow-auto mb-1">
+                        <div class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
                             @for (msg of selectedMessages(); track msg.id) {
                                 <div class="message-bubble nes-container is-rounded" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
                                     @if (msg.replyContext) {

@@ -363,6 +363,28 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    overflow: hidden;
+
+    // Messages container
+    > .nes-container.flex-1 {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 1rem;
+    }
+}
+
+// ============================================
+// Messages Container
+// ============================================
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem !important;
 }
 
 // ============================================
@@ -373,12 +395,16 @@ body {
     max-width: 70%;
     margin-bottom: 1rem;
     padding: 1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
     @include pixel-border(var(--theme-border-color));
 
     p.text-sm {
         font-size: 11px;
         line-height: 1.6;
         margin-bottom: 0.5rem;
+        white-space: pre-wrap;
     }
 
     .message-time {
