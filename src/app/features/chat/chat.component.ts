@@ -199,9 +199,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                             class="algo-amount-clear"
                                             title="Remove ALGO"
                                             (click)="sendAmount.set(null)"
-                                        >
-                                            <i class="nes-icon close is-small"></i>
-                                        </button>
+                                        >X</button>
                                     </div>
                                 } @else {
                                     <button
