@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { WalletService } from './wallet.service';
-import { AlgorandService, type Message, type Conversation } from 'ts-algochat';
+import { AlgorandService, type Message, type ConversationData as Conversation } from 'ts-algochat';
 
 const MAINNET_CONFIG = {
     algodToken: '',
