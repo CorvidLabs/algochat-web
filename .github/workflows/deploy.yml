@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build ts-algochat submodule
+        run: |
+          cd packages/ts-algochat
+          bun install
+          bun run build
+
       - name: Build for GitHub Pages
         run: |
           bun run build:gh-pages
