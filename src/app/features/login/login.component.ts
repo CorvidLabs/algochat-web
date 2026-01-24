@@ -122,12 +122,12 @@ import { WalletService } from '../../core/services/wallet.service';
                                     [(ngModel)]="confirmPassword"
                                     placeholder="Confirm your password..."
                                 />
-                                @if (password().length >= 8 && confirmPassword().length > 0 && password() !== confirmPassword()) {
+                                @if (password().length >= 6 && confirmPassword().length > 0 && password() !== confirmPassword()) {
                                     <p class="text-xs text-error mt-1">Passwords do not match</p>
                                 }
                             </div>
                             <p class="text-xs text-muted mt-1">
-                                Min 8 characters. Your mnemonic will be encrypted with AES-256.
+                                Min 6 characters. Your mnemonic will be encrypted with AES-256.
                             </p>
                         }
 
@@ -207,7 +207,7 @@ export class LoginComponent implements OnInit {
     protected readonly canConnect = computed(() => {
         const hasMnemonic = this.mnemonic().trim().length > 0;
         const needsPassword = this.rememberMe();
-        const hasPassword = this.password().trim().length >= 8;
+        const hasPassword = this.password().trim().length >= 6;
         const passwordsMatch = this.password() === this.confirmPassword();
         return hasMnemonic && (!needsPassword || (hasPassword && passwordsMatch));
     });
@@ -238,8 +238,8 @@ export class LoginComponent implements OnInit {
         const remember = this.rememberMe();
         const pwd = remember ? this.password().trim() : undefined;
 
-        if (remember && (!pwd || pwd.length < 8)) {
-            this.error.set('Password must be at least 8 characters.');
+        if (remember && (!pwd || pwd.length < 6)) {
+            this.error.set('Password must be at least 6 characters.');
             this.connecting.set(false);
             return;
         }

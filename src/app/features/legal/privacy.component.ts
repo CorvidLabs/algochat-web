@@ -31,7 +31,7 @@ import { WalletService } from '../../core/services/wallet.service';
 
                         <h3 class="text-success">3. Data Stored Locally</h3>
                         <p>If you enable "Remember me", your mnemonic is encrypted with AES-256-GCM
-                           using a password you provide (minimum 8 characters). The encryption key
+                           using a password you provide (minimum 6 characters). The encryption key
                            is derived using PBKDF2 with 100,000 iterations. This encrypted data is
                            stored in your browser's localStorage and never leaves your device.</p>
                         <ul>
