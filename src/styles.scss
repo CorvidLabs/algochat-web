@@ -421,16 +421,14 @@ i.nes-icon {
 
 .message-bubble {
     max-width: 70%;
-    min-height: 80px;
     margin-bottom: 1rem;
     padding: 1rem;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
-    overflow-x: hidden;
     @include pixel-border(var(--theme-border-color));
 
-    p.text-sm {
+    .message-content {
         font-size: 16px;
         line-height: 1.6;
         margin-bottom: 0.5rem;

@@ -150,29 +150,31 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         <!-- Messages -->
                         <div class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
                             @for (msg of selectedMessages(); track msg.id) {
-                                <div class="message-bubble nes-container is-rounded"
-                                     [class.sent]="msg.direction === 'sent'"
-                                     [class.received]="msg.direction === 'received'"
-                                     [class.pending]="isPending(msg)">
-                                    @if (msg.replyContext) {
-                                        <div class="reply-quote">{{ msg.replyContext.preview }}</div>
-                                    }
-                                    <p class="text-sm">{{ msg.content }}</p>
-                                    <div class="message-footer">
-                                        @if (msg.amount && msg.amount >= 1000) {
-                                            <span class="message-amount" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
-                                                {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount) }} ALGO
-                                            </span>
+                                @if (msg.content) {
+                                    <div class="message-bubble nes-container is-rounded"
+                                         [class.sent]="msg.direction === 'sent'"
+                                         [class.received]="msg.direction === 'received'"
+                                         [class.pending]="isPending(msg)">
+                                        @if (msg.replyContext) {
+                                            <div class="reply-quote">{{ msg.replyContext.preview }}</div>
                                         }
-                                        @if (isPending(msg)) {
-                                            <span class="message-status pending">Sending...</span>
-                                        } @else if (isFailed(msg)) {
-                                            <span class="message-status failed">Failed</span>
-                                        } @else {
-                                            <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
-                                        }
+                                        <p class="message-content">{{ msg.content }}</p>
+                                        <div class="message-footer">
+                                            @if (msg.amount && msg.amount >= 1000) {
+                                                <span class="message-amount" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
+                                                    {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount) }} ALGO
+                                                </span>
+                                            }
+                                            @if (isPending(msg)) {
+                                                <span class="message-status pending">Sending...</span>
+                                            } @else if (isFailed(msg)) {
+                                                <span class="message-status failed">Failed</span>
+                                            } @else {
+                                                <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
+                                            }
+                                        </div>
                                     </div>
-                                </div>
+                                }
                             } @empty {
                                 <div class="empty-state h-full">
                                     <i class="nes-icon is-large comment"></i>
