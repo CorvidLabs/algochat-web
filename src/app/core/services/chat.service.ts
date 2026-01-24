@@ -251,14 +251,22 @@ export class ChatService {
 
     async fetchConversations(): Promise<Conversation[]> {
         const account = this.wallet.account();
-        if (!account) return [];
+        console.log('[fetchConversations] Account:', account?.address ?? 'null');
+
+        if (!account) {
+            console.log('[fetchConversations] No account, returning empty');
+            return [];
+        }
 
         try {
+            console.log('[fetchConversations] Querying indexer for:', account.address);
             const response = await this.indexerClient
                 .searchForTransactions()
                 .address(account.address)
                 .limit(100)
                 .do();
+
+            console.log('[fetchConversations] Found transactions:', response.transactions?.length ?? 0);
 
             const conversationsMap = new Map<string, Conversation>();
 
@@ -331,8 +339,10 @@ export class ChatService {
                 return bLast - aLast;
             });
 
+            console.log('[fetchConversations] Returning', conversations.length, 'conversations');
             return conversations;
-        } catch {
+        } catch (err) {
+            console.error('[fetchConversations] Error:', err);
             return [];
         }
     }

@@ -62,10 +62,15 @@ export class WalletService {
     private restoreSession(): void {
         // Check localStorage first (persisted), then sessionStorage
         const mnemonic = localStorage.getItem(PERSIST_KEY) ?? sessionStorage.getItem(SESSION_KEY);
+        console.log('[WalletService] restoreSession, has mnemonic:', !!mnemonic);
+
         if (mnemonic) {
             // Restore with same persistence setting
             const isPersisted = localStorage.getItem(PERSIST_KEY) !== null;
-            this.connect(mnemonic, isPersisted);
+            const success = this.connect(mnemonic, isPersisted);
+            console.log('[WalletService] Session restored:', success, 'address:', this._account()?.address);
+        } else {
+            console.log('[WalletService] No stored session found');
         }
     }
 
