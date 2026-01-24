@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, inject, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { WalletService } from '../../core/services/wallet.service';
 
 @Component({
     selector: 'app-terms',
@@ -75,7 +76,11 @@ import { RouterLink } from '@angular/router';
                     </div>
 
                     <div class="text-center mt-2">
-                        <a routerLink="/login" class="nes-btn is-primary">Back to Login</a>
+                        @if (wallet.connected()) {
+                            <a routerLink="/chat" class="nes-btn is-primary">Back to Chat</a>
+                        } @else {
+                            <a routerLink="/login" class="nes-btn is-primary">Back to Login</a>
+                        }
                     </div>
                 </section>
             </div>
@@ -117,4 +122,14 @@ import { RouterLink } from '@angular/router';
         }
     `],
 })
-export class TermsComponent {}
+export class TermsComponent implements AfterViewInit {
+    protected readonly wallet = inject(WalletService);
+    private readonly elementRef = inject(ElementRef);
+
+    ngAfterViewInit(): void {
+        const content = this.elementRef.nativeElement.querySelector('.legal-content');
+        if (content) {
+            content.scrollTop = 0;
+        }
+    }
+}

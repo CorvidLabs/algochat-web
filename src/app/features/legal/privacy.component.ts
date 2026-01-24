@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, inject, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { WalletService } from '../../core/services/wallet.service';
 
 @Component({
     selector: 'app-privacy',
@@ -29,12 +30,18 @@ import { RouterLink } from '@angular/router';
                         </ul>
 
                         <h3 class="text-success">3. Data Stored Locally</h3>
-                        <p>If you enable "Remember me", your encrypted mnemonic is stored in your browser's
-                           localStorage. This data never leaves your device.</p>
+                        <p>If you enable "Remember me", your mnemonic is encrypted with AES-256-GCM
+                           using a password you provide (minimum 8 characters). The encryption key
+                           is derived using PBKDF2 with 100,000 iterations. This encrypted data is
+                           stored in your browser's localStorage and never leaves your device.</p>
                         <ul>
-                            <li>Contact nicknames and settings (localStorage)</li>
-                            <li>Selected conversation preference (localStorage)</li>
+                            <li>Encrypted mnemonic (localStorage, AES-256-GCM encrypted)</li>
+                            <li>Contact nicknames and settings (localStorage, unencrypted)</li>
+                            <li>Selected conversation preference (localStorage, unencrypted)</li>
                         </ul>
+                        <p>Without "Remember me", your mnemonic is encrypted with a random key
+                           that exists only in memory. When you close the tab, the key is lost
+                           and the encrypted data becomes unreadable.</p>
 
                         <h3 class="text-success">4. Blockchain Data</h3>
                         <p>
@@ -95,7 +102,11 @@ import { RouterLink } from '@angular/router';
                     </div>
 
                     <div class="text-center mt-2">
-                        <a routerLink="/login" class="nes-btn is-primary">Back to Login</a>
+                        @if (wallet.connected()) {
+                            <a routerLink="/chat" class="nes-btn is-primary">Back to Chat</a>
+                        } @else {
+                            <a routerLink="/login" class="nes-btn is-primary">Back to Login</a>
+                        }
                     </div>
                 </section>
             </div>
@@ -137,4 +148,14 @@ import { RouterLink } from '@angular/router';
         }
     `],
 })
-export class PrivacyComponent {}
+export class PrivacyComponent implements AfterViewInit {
+    protected readonly wallet = inject(WalletService);
+    private readonly elementRef = inject(ElementRef);
+
+    ngAfterViewInit(): void {
+        const content = this.elementRef.nativeElement.querySelector('.legal-content');
+        if (content) {
+            content.scrollTop = 0;
+        }
+    }
+}
