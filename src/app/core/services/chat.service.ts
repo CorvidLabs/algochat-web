@@ -349,7 +349,15 @@ export class ChatService {
 }
 
 function base64ToBytes(base64: string): Uint8Array {
-    const binaryString = atob(base64);
+    // Convert base64url to standard base64 (indexer uses base64url encoding)
+    const standardBase64 = base64
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+    // Add padding if needed
+    const padded = standardBase64 + '='.repeat((4 - (standardBase64.length % 4)) % 4);
+
+    const binaryString = atob(padded);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
