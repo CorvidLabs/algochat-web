@@ -184,7 +184,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                     (click)="sendMessage()"
                                 >
                                     @if (sendAmount()) {
-                                        Send {{ sendAmount() }}A
+                                        Send {{ formatAlgo(sendAmount()!) }}A
                                     } @else {
                                         Send
                                     }
@@ -193,7 +193,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             <div class="algo-amount-row">
                                 @if (sendAmount()) {
                                     <div class="algo-amount-badge">
-                                        <span class="algo-amount-value">{{ sendAmount() }} ALGO</span>
+                                        <span class="algo-amount-value">{{ formatAlgo(sendAmount()!) }} ALGO</span>
                                         <button
                                             type="button"
                                             class="algo-amount-clear"
@@ -683,10 +683,17 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected confirmAlgoAmount(): void {
         const value = this.algoInputValue();
         if (value && value >= 0.001) {
-            this.sendAmount.set(value);
+            // Round to 6 decimal places (microAlgos precision) to avoid floating point issues
+            const rounded = Math.round(value * 1_000_000) / 1_000_000;
+            this.sendAmount.set(rounded);
         }
         this.showAlgoInput.set(false);
         this.algoInputValue.set(null);
+    }
+
+    protected formatAlgo(amount: number): string {
+        // Format with up to 6 decimals, removing trailing zeros
+        return amount.toFixed(6).replace(/\.?0+$/, '');
     }
 
     protected cancelAlgoInput(): void {
