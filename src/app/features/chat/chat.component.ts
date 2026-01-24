@@ -150,18 +150,27 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         <!-- Messages -->
                         <div class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
                             @for (msg of selectedMessages(); track msg.id) {
-                                <div class="message-bubble nes-container is-rounded" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
+                                <div class="message-bubble nes-container is-rounded"
+                                     [class.sent]="msg.direction === 'sent'"
+                                     [class.received]="msg.direction === 'received'"
+                                     [class.pending]="isPending(msg)">
                                     @if (msg.replyContext) {
                                         <div class="reply-quote">{{ msg.replyContext.preview }}</div>
                                     }
                                     <p class="text-sm">{{ msg.content }}</p>
                                     <div class="message-footer">
-                                        @if (msg.amount && msg.amount > 1000) {
+                                        @if (msg.amount && msg.amount >= 1000) {
                                             <span class="message-amount" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
                                                 {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount) }} ALGO
                                             </span>
                                         }
-                                        <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
+                                        @if (isPending(msg)) {
+                                            <span class="message-status pending">Sending...</span>
+                                        } @else if (isFailed(msg)) {
+                                            <span class="message-status failed">Failed</span>
+                                        } @else {
+                                            <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
+                                        }
                                     </div>
                                 </div>
                             } @empty {
@@ -363,6 +372,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly showAlgoInput = signal(false);
     protected readonly algoInputValue = signal<number | null>(null);
     protected readonly showContactSettings = signal(false);
+    protected readonly pendingMessages = signal<Set<string>>(new Set());
+    protected readonly failedMessages = signal<Set<string>>(new Set());
     protected readonly contactSettingsAddress = signal<string | null>(null);
     protected readonly showBlockedContacts = signal(false);
 
@@ -509,30 +520,22 @@ export class ChatComponent implements OnInit, OnDestroy {
         const address = this.selectedAddress();
         const message = this.newMessage().trim();
 
-        console.log('[sendMessage] To:', address);
-        console.log('[sendMessage] Message:', message);
-
         if (!address || !message) return;
 
         // Auto-publish our key if not yet published and we have balance
         if (!this.keyPublished() && this.canPublishKey()) {
-            console.log('[sendMessage] Auto-publishing key...');
             await this.publishKey();
         }
 
         // Find recipient public key
         const conv = this.conversations().find((c) => c.participant === address);
         let pubKey = conv?.participantPublicKey;
-        console.log('[sendMessage] Key from conversation cache:', !!pubKey);
 
         if (!pubKey) {
-            console.log('[sendMessage] Discovering public key...');
             pubKey = (await this.chatService.discoverPublicKey(address)) ?? undefined;
-            console.log('[sendMessage] Discovered key:', !!pubKey);
         }
 
         if (!pubKey) {
-            console.log('[sendMessage] No key found, showing alert');
             alert(
                 'Cannot find recipient\'s encryption key.\n\n' +
                 'They need to publish their key first by clicking the star button in their header, ' +
@@ -545,26 +548,66 @@ export class ChatComponent implements OnInit, OnDestroy {
         const amountAlgo = this.sendAmount();
         const amountMicroAlgos = amountAlgo ? Math.floor(amountAlgo * 1_000_000) : undefined;
 
-        const txid = await this.chatService.sendMessage(address, pubKey, message, amountMicroAlgos);
+        // Generate a temporary ID for optimistic update
+        const tempId = `pending-${Date.now()}`;
 
-        if (txid) {
-            this.newMessage.set('');
-            this.sendAmount.set(null);
+        // Add optimistic message immediately
+        const newMsg: Message = {
+            id: tempId,
+            sender: this.wallet.address(),
+            recipient: address,
+            content: message,
+            timestamp: new Date(),
+            confirmedRound: 0,
+            direction: 'sent',
+            amount: amountMicroAlgos ?? 1000,
+        };
 
-            // Add optimistic message
-            const newMsg: Message = {
-                id: txid,
-                sender: this.wallet.address(),
-                recipient: address,
-                content: message,
-                timestamp: new Date(),
-                confirmedRound: 0,
-                direction: 'sent',
-                amount: amountMicroAlgos ?? 1000,
-            };
+        this.selectedMessages.update((msgs) => [...msgs, newMsg]);
+        this.pendingMessages.update((set) => new Set(set).add(tempId));
+        this.newMessage.set('');
+        this.sendAmount.set(null);
 
-            this.selectedMessages.update((msgs) => [...msgs, newMsg]);
+        // Send the message
+        try {
+            const txid = await this.chatService.sendMessage(address, pubKey, message, amountMicroAlgos);
+
+            if (txid) {
+                // Update the message with real txid and remove from pending
+                this.selectedMessages.update((msgs) =>
+                    msgs.map((m) => (m.id === tempId ? { ...m, id: txid } : m))
+                );
+                this.pendingMessages.update((set) => {
+                    const newSet = new Set(set);
+                    newSet.delete(tempId);
+                    return newSet;
+                });
+            } else {
+                // Mark as failed
+                this.pendingMessages.update((set) => {
+                    const newSet = new Set(set);
+                    newSet.delete(tempId);
+                    return newSet;
+                });
+                this.failedMessages.update((set) => new Set(set).add(tempId));
+            }
+        } catch (error) {
+            // Mark as failed
+            this.pendingMessages.update((set) => {
+                const newSet = new Set(set);
+                newSet.delete(tempId);
+                return newSet;
+            });
+            this.failedMessages.update((set) => new Set(set).add(tempId));
         }
+    }
+
+    protected isPending(msg: Message): boolean {
+        return this.pendingMessages().has(msg.id);
+    }
+
+    protected isFailed(msg: Message): boolean {
+        return this.failedMessages().has(msg.id);
     }
 
     protected async startNewChat(): Promise<void> {

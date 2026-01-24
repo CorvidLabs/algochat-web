@@ -449,6 +449,18 @@ i.nes-icon {
         opacity: 0.7;
     }
 
+    .message-status {
+        font-size: 12px;
+
+        &.pending {
+            color: var(--theme-warning);
+        }
+
+        &.failed {
+            color: var(--theme-error);
+        }
+    }
+
     .message-amount {
         font-size: 14px;
         font-weight: bold;
@@ -486,6 +498,10 @@ i.nes-icon {
         .message-time {
             color: var(--theme-secondary-text);
         }
+    }
+
+    &.pending {
+        opacity: 0.7;
     }
 }
 
