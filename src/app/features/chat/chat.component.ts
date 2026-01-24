@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { WalletService } from '../../core/services/wallet.service';
 import { ChatService } from '../../core/services/chat.service';
-import type { Message, Conversation } from '../../core/types';
+import type { Message, Conversation } from 'ts-algochat';
 
 @Component({
     selector: 'app-chat',

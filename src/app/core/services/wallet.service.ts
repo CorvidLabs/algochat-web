@@ -1,13 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core';
-import algosdk from 'algosdk';
-import { deriveEncryptionKeys } from '../crypto';
-import type { X25519KeyPair } from '../types';
-
-export interface ChatAccount {
-    address: string;
-    account: algosdk.Account;
-    encryptionKeys: X25519KeyPair;
-}
+import {
+    createChatAccountFromMnemonic,
+    createRandomChatAccount,
+    validateMnemonic,
+    validateAddress,
+    type ChatAccount,
+} from 'ts-algochat';
 
 const SESSION_KEY = 'algochat_session';
 const PERSIST_KEY = 'algochat_persist';
@@ -26,19 +24,9 @@ export class WalletService {
 
     connect(mnemonic: string, remember = false): boolean {
         try {
-            const account = algosdk.mnemonicToSecretKey(mnemonic);
-            const seed = account.sk.slice(0, 32);
-            const encryptionKeys = deriveEncryptionKeys(seed);
-
-            const chatAccount: ChatAccount = {
-                address: account.addr.toString(),
-                account,
-                encryptionKeys,
-            };
-
+            const chatAccount = createChatAccountFromMnemonic(mnemonic);
             this._account.set(chatAccount);
 
-            // Store mnemonic - localStorage if remember, sessionStorage otherwise
             if (remember) {
                 localStorage.setItem(PERSIST_KEY, mnemonic);
                 sessionStorage.removeItem(SESSION_KEY);
@@ -60,32 +48,24 @@ export class WalletService {
     }
 
     private restoreSession(): void {
-        // Check localStorage first (persisted), then sessionStorage
         const mnemonic = localStorage.getItem(PERSIST_KEY) ?? sessionStorage.getItem(SESSION_KEY);
         if (mnemonic) {
-            // Restore with same persistence setting
             const isPersisted = localStorage.getItem(PERSIST_KEY) !== null;
             this.connect(mnemonic, isPersisted);
         }
     }
 
     validateMnemonic(mnemonic: string): boolean {
-        try {
-            algosdk.mnemonicToSecretKey(mnemonic);
-            return true;
-        } catch {
-            return false;
-        }
+        return validateMnemonic(mnemonic);
     }
 
     validateAddress(address: string): boolean {
-        return algosdk.isValidAddress(address);
+        return validateAddress(address);
     }
 
     generateAccount(): { mnemonic: string; address: string } {
-        const account = algosdk.generateAccount();
-        const mnemonic = algosdk.secretKeyToMnemonic(account.sk);
-        return { mnemonic, address: account.addr.toString() };
+        const { account, mnemonic } = createRandomChatAccount();
+        return { mnemonic, address: account.address };
     }
 
     getPublicKeyBase64(): string {
