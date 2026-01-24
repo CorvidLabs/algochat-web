@@ -348,7 +348,18 @@ export class ChatService {
     }
 }
 
-function base64ToBytes(base64: string): Uint8Array {
+function base64ToBytes(base64: string | Uint8Array): Uint8Array {
+    // If already Uint8Array, return as-is
+    if (base64 instanceof Uint8Array) {
+        return base64;
+    }
+
+    // If not a string, try to convert
+    if (typeof base64 !== 'string') {
+        console.warn('[base64ToBytes] Unexpected type:', typeof base64, base64);
+        return new Uint8Array(0);
+    }
+
     // Convert base64url to standard base64 (indexer uses base64url encoding)
     const standardBase64 = base64
         .replace(/-/g, '+')
