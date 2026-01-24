@@ -38,7 +38,7 @@ export class ChatService {
                 recipientAddress,
                 recipientPublicKey,
                 message,
-                amount ? { amount } : undefined
+                { amount: amount ?? 1000, waitForConfirmation: true }
             );
             return result.txid;
         } catch (err) {
@@ -63,6 +63,27 @@ export class ChatService {
             return [];
         } finally {
             this.loading.set(false);
+        }
+    }
+
+    async fetchMessagesBefore(
+        participantAddress: string,
+        beforeRound: number,
+        limit = 50
+    ): Promise<Message[]> {
+        const account = this.wallet.account();
+        if (!account) return [];
+
+        try {
+            return await this.algorand.fetchMessages(
+                account,
+                participantAddress,
+                undefined,
+                limit,
+                beforeRound
+            );
+        } catch {
+            return [];
         }
     }
 

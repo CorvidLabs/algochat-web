@@ -148,7 +148,12 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                         </div>
 
                         <!-- Messages -->
-                        <div #messagesContainer class="nes-container is-dark is-rounded flex-1 mb-1 messages-container">
+                        <div #messagesContainer class="nes-container is-dark is-rounded flex-1 mb-1 messages-container" (scroll)="onMessagesScroll($event)">
+                            @if (loadingMoreMessages()) {
+                                <div class="loading-more text-center p-1">
+                                    <span class="loading-dots">Loading older messages...</span>
+                                </div>
+                            }
                             @for (msg of selectedMessages(); track msg.id) {
                                 @if (hasContent(msg)) {
                                     <div class="message-bubble nes-container is-rounded"
@@ -388,6 +393,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly contactSettingsAddress = signal<string | null>(null);
     protected readonly showBlockedContacts = signal(false);
 
+    // Pagination state
+    protected readonly hasMoreMessages = signal(true);
+    protected readonly loadingMoreMessages = signal(false);
+
+    private static readonly SELECTED_CONVO_KEY = 'algochat_selected_conversation';
+
     protected readonly blockedCount = computed(() => {
         // Access settings to trigger reactivity
         this.contactSettings.settings();
@@ -512,15 +523,33 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.conversations.set(conversations);
         this.balance.set(balance);
         this.keyPublished.set(hasKey);
+
+        // Restore selected conversation after data loads
+        this.restoreSelectedConversation();
     }
 
     protected async selectConversation(conv: Conversation): Promise<void> {
         this.selectedAddress.set(conv.participant);
         this.selectedMessages.set(conv.messages);
 
+        // Reset pagination state
+        this.hasMoreMessages.set(true);
+        this.loadingMoreMessages.set(false);
+
+        // Save to localStorage
+        this.saveSelectedConversation(conv.participant);
+
+        // Scroll to bottom after initial messages load
+        this.cdr.detectChanges();
+        this.scrollToBottom();
+
         // Refresh messages
         const messages = await this.chatService.fetchMessages(conv.participant);
         this.selectedMessages.set(messages);
+
+        // Scroll again after fresh messages loaded
+        this.cdr.detectChanges();
+        this.scrollToBottom();
     }
 
     protected async sendMessage(event?: Event): Promise<void> {
@@ -681,6 +710,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected disconnect(): void {
         this.contactSettings.clear();
+        localStorage.removeItem(ChatComponent.SELECTED_CONVO_KEY);
         this.wallet.disconnect();
         this.router.navigate(['/login']);
     }
@@ -693,6 +723,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected goBack(): void {
         this.selectedAddress.set(null);
         this.selectedMessages.set([]);
+        localStorage.removeItem(ChatComponent.SELECTED_CONVO_KEY);
     }
 
     protected async copyAddress(): Promise<void> {
@@ -799,5 +830,72 @@ export class ChatComponent implements OnInit, OnDestroy {
                 container.scrollTop = container.scrollHeight;
             }
         });
+    }
+
+    private saveSelectedConversation(address: string): void {
+        localStorage.setItem(ChatComponent.SELECTED_CONVO_KEY, address);
+    }
+
+    private restoreSelectedConversation(): void {
+        const saved = localStorage.getItem(ChatComponent.SELECTED_CONVO_KEY);
+        if (saved) {
+            const conv = this.conversations().find(c => c.participant === saved);
+            if (conv) {
+                this.selectConversation(conv);
+            }
+        }
+    }
+
+    protected onMessagesScroll(event: Event): void {
+        const container = event.target as HTMLElement;
+        // If scrolled near top (within 100px), load more
+        if (container.scrollTop < 100 && this.hasMoreMessages() && !this.loadingMoreMessages()) {
+            this.loadMoreMessages();
+        }
+    }
+
+    protected async loadMoreMessages(): Promise<void> {
+        const address = this.selectedAddress();
+        if (!address) return;
+
+        this.loadingMoreMessages.set(true);
+
+        const currentMessages = this.selectedMessages();
+        // Filter out pending messages (confirmedRound = 0) when finding oldest
+        const confirmedMessages = currentMessages.filter(m => m.confirmedRound > 0);
+        if (confirmedMessages.length === 0) {
+            this.loadingMoreMessages.set(false);
+            this.hasMoreMessages.set(false);
+            return;
+        }
+
+        const oldestRound = Math.min(...confirmedMessages.map(m => m.confirmedRound));
+
+        // Fetch older messages
+        const olderMessages = await this.chatService.fetchMessagesBefore(address, oldestRound, 50);
+
+        if (olderMessages.length < 50) {
+            this.hasMoreMessages.set(false);
+        }
+
+        if (olderMessages.length > 0) {
+            // Preserve scroll position when prepending
+            const container = this.messagesContainer()?.nativeElement;
+            const previousHeight = container?.scrollHeight ?? 0;
+
+            // Prepend older messages (dedupe by id)
+            const existingIds = new Set(currentMessages.map(m => m.id));
+            const newMessages = olderMessages.filter(m => !existingIds.has(m.id));
+            this.selectedMessages.update(msgs => [...newMessages, ...msgs]);
+
+            // Restore scroll position after render
+            this.cdr.detectChanges();
+            if (container) {
+                const newHeight = container.scrollHeight;
+                container.scrollTop = newHeight - previousHeight;
+            }
+        }
+
+        this.loadingMoreMessages.set(false);
     }
 }

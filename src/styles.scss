@@ -663,6 +663,12 @@ i.nes-icon {
     animation: blink 1s infinite;
 }
 
+.loading-more {
+    color: var(--theme-secondary-text);
+    font-size: 12px;
+    margin-bottom: 0.5rem;
+}
+
 // ============================================
 // Pixel Corners (8-bit style)
 // ============================================
