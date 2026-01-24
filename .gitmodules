@@ -1,0 +1,3 @@
+[submodule "packages/ts-algochat"]
+	path = packages/ts-algochat
+	url = https://github.com/CorvidLabs/ts-algochat.git
