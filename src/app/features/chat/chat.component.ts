@@ -172,15 +172,18 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             <details class="algo-amount-details">
                                 <summary class="text-xs text-muted">+ Add ALGO</summary>
                                 <div class="algo-amount-input">
+                                    <label for="algo-amount" class="sr-only">ALGO amount to send</label>
                                     <input
+                                        id="algo-amount"
                                         type="number"
                                         class="nes-input is-dark"
                                         [(ngModel)]="sendAmount"
                                         min="0.001"
                                         step="0.001"
                                         placeholder="0.001"
+                                        aria-describedby="algo-amount-hint"
                                     />
-                                    <span class="text-xs">ALGO</span>
+                                    <span id="algo-amount-hint" class="text-xs">ALGO</span>
                                 </div>
                             </details>
                         </div>
@@ -490,6 +493,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
 
     protected disconnect(): void {
+        this.contactSettings.clear();
         this.wallet.disconnect();
         this.router.navigate(['/login']);
     }

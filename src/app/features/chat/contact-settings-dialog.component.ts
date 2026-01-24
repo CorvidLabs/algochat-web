@@ -7,20 +7,22 @@ import { ContactSettingsService, type ContactSettings } from '../../core/service
     imports: [FormsModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-        <div class="nes-dialog-overlay" (click)="onOverlayClick($event)">
+        <div class="nes-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="contact-settings-title" (click)="onOverlayClick($event)">
             <section class="nes-container is-dark is-rounded dialog-box contact-settings-dialog">
-                <h3 class="mb-2 text-warning">Contact Settings</h3>
+                <h3 id="contact-settings-title" class="mb-2 text-warning">Contact Settings</h3>
                 <p class="text-xs text-muted mb-2 word-break">{{ address() }}</p>
 
                 <!-- Nickname -->
                 <div class="nes-field mb-2">
-                    <label class="text-success">Nickname</label>
+                    <label for="nickname-input" class="text-success">Nickname</label>
                     <input
+                        id="nickname-input"
                         type="text"
                         class="nes-input is-dark"
                         [(ngModel)]="nickname"
                         placeholder="Enter nickname..."
                         maxlength="20"
+                        autocomplete="off"
                     />
                 </div>
 
