@@ -206,3 +206,62 @@ export function isSessionEncryptedData(data: string): boolean {
         return false;
     }
 }
+
+// ============================================================
+// Password Context - For encrypting contacts in "Remember me" mode
+// ============================================================
+
+/** Cached password for "Remember me" mode - never persisted */
+let cachedPassword: string | null = null;
+
+/**
+ * Sets the password context for contact encryption.
+ * Called when user connects with "Remember me" or unlocks.
+ */
+export function setPasswordContext(password: string): void {
+    cachedPassword = password;
+}
+
+/**
+ * Clears the password context.
+ * Called on disconnect.
+ */
+export function clearPasswordContext(): void {
+    cachedPassword = null;
+}
+
+/**
+ * Checks if we're in "Remember me" mode (have a password).
+ */
+export function hasPasswordContext(): boolean {
+    return cachedPassword !== null;
+}
+
+/**
+ * Encrypts data for storage using the appropriate method:
+ * - If password context is set (Remember me): uses password encryption
+ * - Otherwise: uses session key encryption
+ */
+export async function encryptForStorage(plaintext: string): Promise<string> {
+    if (cachedPassword) {
+        return encryptWithPassword(plaintext, cachedPassword);
+    }
+    return encryptForSession(plaintext);
+}
+
+/**
+ * Decrypts data from storage.
+ * Tries password decryption first (if context set), then session decryption.
+ * Returns null if decryption fails.
+ */
+export async function decryptFromStorage(encrypted: string): Promise<string | null> {
+    // Check if it's password-encrypted data (has salt)
+    if (isEncryptedData(encrypted) && cachedPassword) {
+        return decryptWithPassword(encrypted, cachedPassword);
+    }
+    // Check if it's session-encrypted data
+    if (isSessionEncryptedData(encrypted)) {
+        return decryptFromSession(encrypted);
+    }
+    return null;
+}

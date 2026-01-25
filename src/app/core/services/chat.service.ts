@@ -42,7 +42,9 @@ export class ChatService {
             );
             return result.txid;
         } catch (err) {
-            this.error.set(err instanceof Error ? err.message : 'Failed to send message');
+            const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+            console.error('[AlgoChat] sendMessage error:', err);
+            this.error.set(errorMessage);
             return null;
         } finally {
             this.loading.set(false);

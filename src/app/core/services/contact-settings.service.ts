@@ -1,4 +1,10 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import {
+    encryptForStorage,
+    decryptFromStorage,
+    isEncryptedData,
+    isSessionEncryptedData,
+} from '../utils/storage-crypto';
 
 export interface ContactSettings {
     nickname?: string;
@@ -12,30 +18,66 @@ export class ContactSettingsService {
     private static readonly STORAGE_KEY = 'algochat_contacts';
 
     private readonly _settings = signal<Record<string, ContactSettings>>({});
+    private initialized = false;
+    private savePromise: Promise<void> | null = null;
 
     readonly settings = this._settings.asReadonly();
 
-    constructor() {
-        this.load();
+    /**
+     * Initialize the service by loading and decrypting contacts.
+     * Must be called after wallet is connected/unlocked.
+     */
+    async initialize(): Promise<void> {
+        if (this.initialized) return;
+        await this.load();
+        this.initialized = true;
     }
 
-    private load(): void {
+    private async load(): Promise<void> {
         try {
             const stored = localStorage.getItem(ContactSettingsService.STORAGE_KEY);
-            if (stored) {
-                this._settings.set(JSON.parse(stored));
+            if (!stored) {
+                this._settings.set({});
+                return;
+            }
+
+            // Check if data is encrypted
+            if (isEncryptedData(stored) || isSessionEncryptedData(stored)) {
+                const decrypted = await decryptFromStorage(stored);
+                if (decrypted) {
+                    this._settings.set(JSON.parse(decrypted));
+                } else {
+                    // Decryption failed (wrong password or session key lost)
+                    // Start fresh but don't delete - might unlock later
+                    this._settings.set({});
+                }
+            } else {
+                // Legacy unencrypted data - migrate to encrypted
+                const data = JSON.parse(stored);
+                this._settings.set(data);
+                // Re-save to encrypt
+                this.save();
             }
         } catch {
-            // Invalid JSON, reset
+            // Invalid data, reset
             this._settings.set({});
         }
     }
 
     private save(): void {
-        localStorage.setItem(
-            ContactSettingsService.STORAGE_KEY,
-            JSON.stringify(this._settings())
-        );
+        // Fire-and-forget save with error handling
+        const doSave = async (): Promise<void> => {
+            try {
+                const data = JSON.stringify(this._settings());
+                const encrypted = await encryptForStorage(data);
+                localStorage.setItem(ContactSettingsService.STORAGE_KEY, encrypted);
+            } catch (err) {
+                console.error('[AlgoChat] Failed to save contacts:', err);
+            }
+        };
+
+        // Chain saves to avoid race conditions
+        this.savePromise = (this.savePromise ?? Promise.resolve()).then(doSave);
     }
 
     getSettings(address: string): ContactSettings {

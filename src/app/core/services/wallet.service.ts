@@ -12,6 +12,8 @@ import {
     isEncryptedData,
     encryptForSession,
     decryptFromSession,
+    setPasswordContext,
+    clearPasswordContext,
 } from '../utils/storage-crypto';
 
 const SESSION_KEY = 'algochat_session';
@@ -44,11 +46,15 @@ export class WalletService {
                 const encrypted = await encryptWithPassword(mnemonic, password);
                 localStorage.setItem(PERSIST_KEY, encrypted);
                 sessionStorage.removeItem(SESSION_KEY);
+                // Cache password for contact encryption
+                setPasswordContext(password);
             } else if (!remember) {
                 // Encrypt with session key (key in memory only, dies with tab)
                 const sessionEncrypted = await encryptForSession(mnemonic);
                 sessionStorage.setItem(SESSION_KEY, sessionEncrypted);
                 localStorage.removeItem(PERSIST_KEY);
+                // Clear password context - use session key for contacts
+                clearPasswordContext();
             }
 
             return true;
@@ -82,6 +88,8 @@ export class WalletService {
             // Keep it in session too for this tab (encrypted)
             const sessionEncrypted = await encryptForSession(mnemonic);
             sessionStorage.setItem(SESSION_KEY, sessionEncrypted);
+            // Cache password for contact encryption
+            setPasswordContext(password);
             return true;
         } catch {
             return false;
@@ -99,6 +107,7 @@ export class WalletService {
         this._account.set(null);
         sessionStorage.removeItem(SESSION_KEY);
         localStorage.removeItem(PERSIST_KEY);
+        clearPasswordContext();
     }
 
     private async restoreSessionStorage(): Promise<void> {

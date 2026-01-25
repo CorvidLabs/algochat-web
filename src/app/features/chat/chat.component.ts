@@ -502,6 +502,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
 
     async ngOnInit(): Promise<void> {
+        // Initialize contact settings (requires wallet to be connected for encryption)
+        await this.contactSettings.initialize();
         // Auth guard ensures we're connected, so just load data
         await this.loadData();
         this.startAutoRefresh();
@@ -695,7 +697,9 @@ export class ChatComponent implements OnInit, OnDestroy {
                     return newSet;
                 });
             } else {
-                // Mark as failed
+                // Mark as failed and log the error from chatService
+                const serviceError = this.chatService.error();
+                console.error('[AlgoChat] Failed to send message:', serviceError ?? 'Unknown error');
                 this.pendingMessages.update((set) => {
                     const newSet = new Set(set);
                     newSet.delete(tempId);
@@ -704,7 +708,8 @@ export class ChatComponent implements OnInit, OnDestroy {
                 this.failedMessages.update((set) => new Set(set).add(tempId));
             }
         } catch (error) {
-            // Mark as failed
+            // Mark as failed and log the error
+            console.error('[AlgoChat] Failed to send message:', error);
             this.pendingMessages.update((set) => {
                 const newSet = new Set(set);
                 newSet.delete(tempId);

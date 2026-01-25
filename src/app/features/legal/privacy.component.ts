@@ -30,18 +30,19 @@ import { WalletService } from '../../core/services/wallet.service';
                         </ul>
 
                         <h3 class="text-success">3. Data Stored Locally</h3>
-                        <p>If you enable "Remember me", your mnemonic is encrypted with AES-256-GCM
-                           using a password you provide (minimum 6 characters). The encryption key
-                           is derived using PBKDF2 with 100,000 iterations. This encrypted data is
-                           stored in your browser's localStorage and never leaves your device.</p>
+                        <p>If you enable "Remember me", your mnemonic and contacts are encrypted
+                           with AES-256-GCM using a password you provide (minimum 6 characters).
+                           The encryption key is derived using PBKDF2 with 100,000 iterations.
+                           This encrypted data is stored in your browser's localStorage and
+                           never leaves your device.</p>
                         <ul>
                             <li>Encrypted mnemonic (localStorage, AES-256-GCM encrypted)</li>
-                            <li>Contact nicknames and settings (localStorage, unencrypted)</li>
+                            <li>Contact nicknames and settings (localStorage, AES-256-GCM encrypted)</li>
                             <li>Selected conversation preference (localStorage, unencrypted)</li>
                         </ul>
-                        <p>Without "Remember me", your mnemonic is encrypted with a random key
-                           that exists only in memory. When you close the tab, the key is lost
-                           and the encrypted data becomes unreadable.</p>
+                        <p>Without "Remember me", your mnemonic and contacts are encrypted with
+                           a random key that exists only in memory. When you close the tab,
+                           the key is lost and the encrypted data becomes unreadable.</p>
 
                         <h3 class="text-success">4. Blockchain Data</h3>
                         <p>
