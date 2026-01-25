@@ -589,6 +589,11 @@ i.nes-icon {
     }
 }
 
+.onboarding-text {
+    max-width: 300px;
+    line-height: 1.6;
+}
+
 // ============================================
 // Login Screen
 // ============================================
@@ -643,6 +648,49 @@ i.nes-icon {
 .dialog-box {
     width: 90%;
     max-width: 500px;
+}
+
+// QR Code Dialog
+.qr-dialog {
+    max-width: 320px;
+}
+
+.qr-btn {
+    padding: 0.25rem 0.5rem !important;
+    min-width: auto !important;
+}
+
+.qr-icon {
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.qr-code-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 4px;
+    min-height: 200px;
+}
+
+.qr-code-img {
+    image-rendering: pixelated;
+    width: 200px;
+    height: 200px;
+}
+
+.qr-loading {
+    color: #000;
+    font-size: 12px;
+}
+
+.qr-address {
+    font-size: 10px;
+    color: var(--theme-secondary-text);
+    max-width: 280px;
+    margin: 0 auto;
 }
 
 // ============================================
@@ -983,6 +1031,16 @@ i.nes-icon {
         background: var(--theme-error);
         border-color: var(--theme-error);
     }
+}
+
+.algo-amount-badge.is-error {
+    background: var(--theme-error);
+}
+
+.algo-amount-error {
+    color: var(--theme-error);
+    font-size: 11px;
+    margin-left: 0.5rem;
 }
 
 .algo-amount-input-row {

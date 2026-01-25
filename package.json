@@ -34,10 +34,12 @@
     "@noble/ciphers": "^2.1.1",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
+    "@types/qrcode": "^1.5.6",
     "algosdk": "^3.5.2",
-    "ts-algochat": "file:packages/ts-algochat",
     "nes.css": "^2.3.0",
+    "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
+    "ts-algochat": "file:packages/ts-algochat",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

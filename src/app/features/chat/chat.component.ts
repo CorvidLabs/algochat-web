@@ -7,6 +7,7 @@ import { ChatService } from '../../core/services/chat.service';
 import { ContactSettingsService } from '../../core/services/contact-settings.service';
 import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
 import type { Message, ConversationData as Conversation } from 'ts-algochat';
+import QRCode from 'qrcode';
 
 @Component({
     selector: 'app-chat',
@@ -49,6 +50,13 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                 <i class="nes-icon is-small coin hide-mobile"></i>
                                 <span>{{ truncateAddress(wallet.address()) }}</span>
                             }
+                        </button>
+                        <button
+                            class="nes-btn qr-btn"
+                            title="Show QR Code"
+                            (click)="showQRCode()"
+                        >
+                            <span class="qr-icon">QR</span>
                         </button>
                         @if (keyPublished() === true) {
                             <span class="nes-text is-success text-xs hide-mobile" title="Key published - others can message you">OK</span>
@@ -260,7 +268,7 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                             </div>
                             <div class="algo-amount-row">
                                 @if (sendAmount()) {
-                                    <div class="algo-amount-badge">
+                                    <div class="algo-amount-badge" [class.is-error]="sendAmountExceedsBalance()">
                                         <span class="algo-amount-value">{{ formatAlgo(sendAmount()!) }} ALGO</span>
                                         <button
                                             type="button"
@@ -269,6 +277,11 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                                             (click)="sendAmount.set(null)"
                                         >X</button>
                                     </div>
+                                    @if (sendAmountExceedsBalance()) {
+                                        <span class="algo-amount-error">
+                                            Max: {{ formatAlgo(maxSendableAlgo()) }} ALGO
+                                        </span>
+                                    }
                                 } @else {
                                     <button
                                         type="button"
@@ -317,8 +330,33 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                     } @else {
                         <div class="nes-container is-dark is-rounded h-full">
                             <div class="empty-state h-full">
-                                <i class="nes-icon is-large star"></i>
-                                <p class="text-sm">Select a conversation or start a new chat</p>
+                                @if (keyPublished() === false) {
+                                    <i class="nes-icon is-large star"></i>
+                                    <p class="text-sm text-warning mb-1">Publish Your Key</p>
+                                    <p class="text-xs text-muted mb-2 onboarding-text">
+                                        Before others can message you, you need to publish your encryption key to the blockchain.
+                                        This costs ~0.001 ALGO and only needs to be done once.
+                                    </p>
+                                    @if (canPublishKey()) {
+                                        <button
+                                            class="nes-btn is-warning"
+                                            [class.is-disabled]="publishing()"
+                                            [disabled]="publishing()"
+                                            (click)="publishKey()"
+                                        >
+                                            @if (publishing()) {
+                                                <span class="loading-dots">Publishing...</span>
+                                            } @else {
+                                                Publish Key
+                                            }
+                                        </button>
+                                    } @else {
+                                        <p class="text-xs text-error">Need at least 0.1 ALGO to publish</p>
+                                    }
+                                } @else {
+                                    <i class="nes-icon is-large star"></i>
+                                    <p class="text-sm">Select a conversation or start a new chat</p>
+                                }
                             </div>
                         </div>
                     }
@@ -402,6 +440,34 @@ import type { Message, ConversationData as Conversation } from 'ts-algochat';
                     </section>
                 </div>
             }
+
+            <!-- QR Code Dialog -->
+            @if (showQRDialog()) {
+                <div class="nes-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="qr-title" (click)="onQROverlayClick($event)">
+                    <section class="nes-container is-dark is-rounded dialog-box qr-dialog">
+                        <h3 id="qr-title" class="mb-2 text-warning">Your Address</h3>
+
+                        <div class="qr-code-container">
+                            @if (qrCodeDataUrl()) {
+                                <img [src]="qrCodeDataUrl()" alt="QR Code for wallet address" class="qr-code-img" />
+                            } @else {
+                                <div class="qr-loading">
+                                    <span class="loading-dots">Generating...</span>
+                                </div>
+                            }
+                        </div>
+
+                        <p class="text-xs text-center word-break mt-1 qr-address">{{ wallet.address() }}</p>
+
+                        <div class="flex gap-1 justify-center mt-2">
+                            <button class="nes-btn is-primary" (click)="copyAddress(); showQRDialog.set(false)">
+                                Copy
+                            </button>
+                            <button class="nes-btn" (click)="showQRDialog.set(false)">Close</button>
+                        </div>
+                    </section>
+                </div>
+            }
         </div>
     `,
 })
@@ -434,6 +500,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly contactSettingsAddress = signal<string | null>(null);
     protected readonly showBlockedContacts = signal(false);
     protected readonly showInfoMenu = signal(false);
+    protected readonly showQRDialog = signal(false);
+    protected readonly qrCodeDataUrl = signal<string | null>(null);
 
     // Pagination state
     protected readonly hasMoreMessages = signal(true);
@@ -463,22 +531,28 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly filteredConversations = computed(() => {
         const settings = this.contactSettings.settings();
         const myAddress = this.wallet.address();
-        return this.conversations()
-            .filter(c => !this.contactSettings.isBlocked(c.participant))
-            .sort((a, b) => {
-                // Self-chat (Notes) always first
-                const aSelf = a.participant === myAddress ? 0 : 1;
-                const bSelf = b.participant === myAddress ? 0 : 1;
-                if (aSelf !== bSelf) return aSelf - bSelf;
-                // Then favorites
-                const aFav = this.contactSettings.isFavorite(a.participant) ? 0 : 1;
-                const bFav = this.contactSettings.isFavorite(b.participant) ? 0 : 1;
-                if (aFav !== bFav) return aFav - bFav;
-                // Then by most recent message
-                const aLast = a.messages[a.messages.length - 1]?.timestamp.getTime() ?? 0;
-                const bLast = b.messages[b.messages.length - 1]?.timestamp.getTime() ?? 0;
-                return bLast - aLast;
-            });
+        let convos = this.conversations()
+            .filter(c => !this.contactSettings.isBlocked(c.participant));
+
+        // Ensure Notes (self-chat) is always present
+        if (myAddress && !convos.some(c => c.participant === myAddress)) {
+            convos = [{ participant: myAddress, messages: [] }, ...convos];
+        }
+
+        return convos.sort((a, b) => {
+            // Self-chat (Notes) always first
+            const aSelf = a.participant === myAddress ? 0 : 1;
+            const bSelf = b.participant === myAddress ? 0 : 1;
+            if (aSelf !== bSelf) return aSelf - bSelf;
+            // Then favorites
+            const aFav = this.contactSettings.isFavorite(a.participant) ? 0 : 1;
+            const bFav = this.contactSettings.isFavorite(b.participant) ? 0 : 1;
+            if (aFav !== bFav) return aFav - bFav;
+            // Then by most recent message
+            const aLast = a.messages[a.messages.length - 1]?.timestamp.getTime() ?? 0;
+            const bLast = b.messages[b.messages.length - 1]?.timestamp.getTime() ?? 0;
+            return bLast - aLast;
+        });
     });
 
     // Auto-refresh intervals
@@ -490,6 +564,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     private static readonly CONVERSATIONS_REFRESH_MS = 30_000; // 30 seconds
     private static readonly MESSAGES_REFRESH_MS = 10_000; // 10 seconds
 
+    // Algorand constants (in microAlgos)
+    private static readonly MIN_BALANCE = 100_000n; // 0.1 ALGO
+    private static readonly TX_FEE = 1_000n; // 0.001 ALGO
+
     protected readonly canPublishKey = computed(() => this.balance() >= 100_000n);
 
     protected readonly formattedBalance = computed(() => {
@@ -497,8 +575,26 @@ export class ChatComponent implements OnInit, OnDestroy {
         return (Number(bal) / 1_000_000).toFixed(3) + ' ALGO';
     });
 
+    /** Maximum ALGO that can be sent (balance - min balance - fee) */
+    protected readonly maxSendableAlgo = computed(() => {
+        const bal = this.balance();
+        const reserved = ChatComponent.MIN_BALANCE + ChatComponent.TX_FEE;
+        if (bal <= reserved) return 0;
+        return Number(bal - reserved) / 1_000_000;
+    });
+
+    /** Check if the selected send amount exceeds what can be sent */
+    protected readonly sendAmountExceedsBalance = computed(() => {
+        const amount = this.sendAmount();
+        if (!amount) return false;
+        return amount > this.maxSendableAlgo();
+    });
+
     protected readonly canSend = computed(() => {
-        return this.newMessage().trim().length > 0 && this.selectedAddress() !== null;
+        const hasMessage = this.newMessage().trim().length > 0;
+        const hasRecipient = this.selectedAddress() !== null;
+        const withinBudget = !this.sendAmountExceedsBalance();
+        return hasMessage && hasRecipient && withinBudget;
     });
 
     async ngOnInit(): Promise<void> {
@@ -814,6 +910,32 @@ export class ChatComponent implements OnInit, OnDestroy {
         await navigator.clipboard.writeText(this.wallet.address());
         this.addressCopied.set(true);
         setTimeout(() => this.addressCopied.set(false), 1500);
+    }
+
+    protected async showQRCode(): Promise<void> {
+        this.showQRDialog.set(true);
+        this.qrCodeDataUrl.set(null);
+
+        try {
+            const dataUrl = await QRCode.toDataURL(this.wallet.address(), {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff',
+                },
+            });
+            this.qrCodeDataUrl.set(dataUrl);
+            this.cdr.detectChanges();
+        } catch (err) {
+            console.error('[AlgoChat] Failed to generate QR code:', err);
+        }
+    }
+
+    protected onQROverlayClick(event: MouseEvent): void {
+        if ((event.target as HTMLElement).classList.contains('nes-dialog-overlay')) {
+            this.showQRDialog.set(false);
+        }
     }
 
     protected async publishKey(): Promise<void> {
