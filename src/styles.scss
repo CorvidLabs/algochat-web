@@ -1256,3 +1256,202 @@ i.nes-icon {
         transform: translateX(-50%) translateY(-4px);
     }
 }
+
+// ============================================
+// PSK (Pre-Shared Key) Indicators
+// ============================================
+
+// Lock indicator in sidebar conversation list
+.psk-lock {
+    color: var(--theme-success);
+    font-size: 10px;
+    margin-right: 2px;
+    vertical-align: middle;
+}
+
+// "Secured" badge in chat header
+.psk-header-badge {
+    display: inline-block;
+    font-size: 8px;
+    padding: 1px 6px;
+    margin-left: 4px;
+    background: var(--theme-success);
+    color: #000;
+    vertical-align: middle;
+}
+
+// Secure channel section in contact settings dialog
+.psk-section {
+    border-top: 2px solid var(--theme-border-color);
+    padding-top: 1rem;
+}
+
+.psk-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: var(--theme-success);
+    color: #000;
+    font-weight: bold;
+}
+
+.psk-action-btn {
+    font-size: 10px !important;
+    padding: 0.3rem 0.6rem !important;
+    min-width: auto !important;
+    min-height: 32px !important;
+}
+
+.psk-import {
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--theme-border-color);
+}
+
+.psk-qr-display {
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--theme-border-color);
+}
+
+.psk-uri-copy {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    input {
+        flex: 1;
+        font-size: 8px !important;
+        min-width: 0;
+    }
+}
+
+.psk-status-active {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.protocol-info-box {
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--theme-border-color);
+}
+
+// ============================================
+// Protocol Version Badge on Messages
+// ============================================
+
+.protocol-badge {
+    font-size: 8px;
+    padding: 1px 4px;
+    background: var(--theme-secondary-bg);
+    color: var(--theme-secondary-text);
+    border: 1px solid var(--theme-border-color);
+    opacity: 0.6;
+    cursor: default;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+
+    .protocol-icon {
+        font-size: 9px;
+        line-height: 1;
+    }
+
+    &.psk {
+        background: rgba(146, 204, 65, 0.15);
+        color: var(--theme-success);
+        border-color: var(--theme-success);
+        opacity: 1;
+    }
+}
+
+// ============================================
+// Protocol Info Page
+// ============================================
+
+.legal-content {
+    code {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 8px;
+        color: var(--theme-primary);
+        background: rgba(0, 0, 0, 0.3);
+        padding: 1px 4px;
+    }
+}
+
+.wire-format {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--theme-border-color);
+    padding: 0.75rem;
+    margin: 0.5rem 0 1rem;
+    overflow-x: auto;
+
+    code {
+        font-size: 8px;
+        line-height: 2;
+        color: var(--theme-primary);
+        white-space: pre-wrap;
+        word-break: break-all;
+        background: none;
+        padding: 0;
+    }
+}
+
+.protocol-table {
+    margin: 0.5rem 0 1rem;
+    border: 2px solid var(--theme-border-color);
+
+    .protocol-row {
+        display: flex;
+        border-bottom: 1px solid var(--theme-border-color);
+        font-size: 10px;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &.header {
+            background: rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+
+            .protocol-value {
+                color: var(--theme-warning);
+            }
+        }
+    }
+
+    .protocol-label {
+        flex: 0 0 140px;
+        padding: 0.4rem 0.5rem;
+        color: var(--theme-secondary-text);
+        background: rgba(0, 0, 0, 0.2);
+        border-right: 1px solid var(--theme-border-color);
+    }
+
+    .protocol-value {
+        flex: 1;
+        padding: 0.4rem 0.5rem;
+        color: var(--theme-primary-text);
+
+        & + .protocol-value {
+            border-left: 1px solid var(--theme-border-color);
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .protocol-table .protocol-label {
+        flex: 0 0 90px;
+        font-size: 7px;
+    }
+
+    .protocol-table .protocol-value {
+        font-size: 7px;
+    }
+
+    .wire-format code {
+        font-size: 6px;
+    }
+}
