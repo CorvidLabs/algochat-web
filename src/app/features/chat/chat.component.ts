@@ -6,7 +6,7 @@ import { WalletService } from '../../core/services/wallet.service';
 import { ChatService } from '../../core/services/chat.service';
 import { ContactSettingsService } from '../../core/services/contact-settings.service';
 import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
-import type { Message, ConversationData as Conversation } from 'ts-algochat';
+import type { Message, ConversationData as Conversation } from '@corvidlabs/ts-algochat';
 import QRCode from 'qrcode';
 
 @Component({
