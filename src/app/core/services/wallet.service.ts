@@ -5,7 +5,7 @@ import {
     validateMnemonic,
     validateAddress,
     type ChatAccount,
-} from 'ts-algochat';
+} from '@corvidlabs/ts-algochat';
 import {
     encryptWithPassword,
     decryptWithPassword,

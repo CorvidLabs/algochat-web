@@ -21,6 +21,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/legal/privacy.component').then((m) => m.PrivacyComponent),
     },
     {
+        path: 'protocol',
+        loadComponent: () => import('./features/protocol/protocol.component').then((m) => m.ProtocolComponent),
+    },
+    {
         path: '',
         redirectTo: 'chat',
         pathMatch: 'full',

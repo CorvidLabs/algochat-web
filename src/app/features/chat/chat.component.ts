@@ -5,8 +5,9 @@ import { DatePipe } from '@angular/common';
 import { WalletService } from '../../core/services/wallet.service';
 import { ChatService } from '../../core/services/chat.service';
 import { ContactSettingsService } from '../../core/services/contact-settings.service';
+import { PSKService } from '../../core/services/psk.service';
 import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
-import type { Message, ConversationData as Conversation } from 'ts-algochat';
+import type { Message, ConversationData as Conversation } from '@corvidlabs/ts-algochat';
 import QRCode from 'qrcode';
 
 @Component({
@@ -29,6 +30,7 @@ import QRCode from 'qrcode';
                             >?</button>
                             @if (showInfoMenu()) {
                                 <div class="info-menu">
+                                    <a routerLink="/protocol" class="info-menu-item" (click)="showInfoMenu.set(false)">Protocol Spec</a>
                                     <a routerLink="/terms" class="info-menu-item" (click)="showInfoMenu.set(false)">Terms of Service</a>
                                     <a routerLink="/privacy" class="info-menu-item" (click)="showInfoMenu.set(false)">Privacy Policy</a>
                                     <a href="https://github.com/CorvidLabs/algochat-web" target="_blank" class="info-menu-item">GitHub</a>
@@ -114,6 +116,9 @@ import QRCode from 'qrcode';
                                         } @else if (contactSettings.isFavorite(conv.participant)) {
                                             <i class="nes-icon is-small star favorite-star"></i>
                                         }
+                                        @if (pskService.hasPSK(conv.participant)) {
+                                            <span class="psk-lock" title="Secure channel — messages use enhanced encryption (ECDH + PSK)">&#x1f6e1;</span>
+                                        }
                                         {{ getDisplayName(conv.participant) }}
                                     </p>
                                     @if (conv.messages.length > 0) {
@@ -160,6 +165,9 @@ import QRCode from 'qrcode';
                                         <i class="nes-icon is-small star favorite-star"></i>
                                     }
                                     {{ getDisplayName(selectedAddress()!) }}
+                                    @if (pskService.hasPSK(selectedAddress()!)) {
+                                        <span class="psk-header-badge" title="This conversation uses enhanced encryption (ECDH + Pre-Shared Key)">&#x1f6e1; Secured</span>
+                                    }
                                 </p>
                                 @if (!isSelfChat(selectedAddress()!) && contactSettings.getSettings(selectedAddress()!).nickname) {
                                     <p class="text-xs text-muted truncate">{{ truncateAddress(selectedAddress()!) }}</p>
@@ -204,6 +212,11 @@ import QRCode from 'qrcode';
                                         }
                                         <p class="message-content">{{ msg.content }}</p>
                                         <div class="message-footer">
+                                            @if (isProtocolPSK(msg)) {
+                                                <span class="protocol-badge psk" title="Encrypted with ECDH + Pre-Shared Key (v1.1)">
+                                                    &#x1f6e1; Secured
+                                                </span>
+                                            }
                                             @if (hasAmount(msg)) {
                                                 <span class="message-amount" [class.sent]="msg.direction === 'sent'" [class.received]="msg.direction === 'received'">
                                                     {{ msg.direction === 'sent' ? '-' : '+' }}{{ formatMicroAlgos(msg.amount!) }} ALGO
@@ -405,6 +418,7 @@ import QRCode from 'qrcode';
             @if (showContactSettings()) {
                 <app-contact-settings-dialog
                     [address]="contactSettingsAddress()!"
+                    [isSelfChat]="isSelfChat(contactSettingsAddress()!)"
                     (close)="closeContactSettings()"
                 />
             }
@@ -476,6 +490,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private readonly chatService = inject(ChatService);
     private readonly router = inject(Router);
     protected readonly contactSettings = inject(ContactSettingsService);
+    protected readonly pskService = inject(PSKService);
     private readonly cdr = inject(ChangeDetectorRef);
 
     private readonly messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
@@ -497,6 +512,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected readonly showContactSettings = signal(false);
     protected readonly pendingMessages = signal<Set<string>>(new Set());
     protected readonly failedMessages = signal<Set<string>>(new Set());
+    private readonly optimisticPskIds = signal<Set<string>>(new Set());
     protected readonly contactSettingsAddress = signal<string | null>(null);
     protected readonly showBlockedContacts = signal(false);
     protected readonly showInfoMenu = signal(false);
@@ -598,8 +614,17 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
 
     async ngOnInit(): Promise<void> {
-        // Initialize contact settings (requires wallet to be connected for encryption)
+        // Initialize services (requires wallet to be connected for encryption)
         await this.contactSettings.initialize();
+        await this.pskService.initialize();
+
+        // Auto-generate PSK for self-chat (Notes) so it always uses the most secure protocol
+        const myAddress = this.wallet.address();
+        if (myAddress && !this.pskService.hasPSK(myAddress)) {
+            const psk = this.pskService.generatePSK();
+            this.pskService.storePSK(myAddress, psk);
+        }
+
         // Auth guard ensures we're connected, so just load data
         await this.loadData();
         this.startAutoRefresh();
@@ -771,6 +796,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
         this.selectedMessages.update((msgs) => [...msgs, newMsg]);
         this.pendingMessages.update((set) => new Set(set).add(tempId));
+        // Mark optimistic message as PSK if secure channel is active
+        if (this.pskService.hasPSK(address)) {
+            this.optimisticPskIds.update(set => new Set(set).add(tempId));
+        }
         this.newMessage.set('');
         this.sendAmount.set(null);
 
@@ -788,6 +817,11 @@ export class ChatComponent implements OnInit, OnDestroy {
                     msgs.map((m) => (m.id === tempId ? { ...m, id: txid } : m))
                 );
                 this.pendingMessages.update((set) => {
+                    const newSet = new Set(set);
+                    newSet.delete(tempId);
+                    return newSet;
+                });
+                this.optimisticPskIds.update(set => {
                     const newSet = new Set(set);
                     newSet.delete(tempId);
                     return newSet;
@@ -821,6 +855,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected isFailed(msg: Message): boolean {
         return this.failedMessages().has(msg.id);
+    }
+
+    protected isProtocolPSK(msg: Message): boolean {
+        return this.chatService.isPSKMessageId(msg.id) || this.optimisticPskIds().has(msg.id);
     }
 
     protected hasContent(msg: Message): boolean {
@@ -879,6 +917,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected disconnect(): void {
         this.contactSettings.clear();
+        this.pskService.clear();
         localStorage.removeItem(ChatComponent.SELECTED_CONVO_KEY);
         this.wallet.disconnect();
         this.router.navigate(['/login']);
