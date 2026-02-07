@@ -3,6 +3,10 @@
  *
  * Manages PSK state, encryption/decryption, and counter tracking
  * for pre-shared key messaging sessions.
+ *
+ * SECURITY: All PSK state (including the initial pre-shared key) is encrypted
+ * via AES-GCM before being persisted to localStorage. See storage-crypto.ts
+ * for details on the encryption strategy.
  */
 
 import { Injectable, signal } from '@angular/core';
@@ -19,6 +23,12 @@ import { pskEncryptMessage, pskDecryptMessage, type PSKDecryptedContent } from '
 import { encodePSKEnvelope, decodePSKEnvelope, isPSKMessage } from './psk-envelope';
 import { createPSKExchangeURI, parsePSKExchangeURI, generatePSK, type PSKExchangeURI } from './psk-exchange';
 import type { PSKEnvelope } from './psk-types';
+import {
+    encryptForStorage,
+    decryptFromStorage,
+    isEncryptedData,
+    isSessionEncryptedData,
+} from '../utils/storage-crypto';
 
 const PSK_STORAGE_PREFIX = 'algochat_psk_';
 
@@ -174,22 +184,46 @@ export class PSKService {
 
     /**
      * Loads all persisted PSK sessions from localStorage.
+     * Handles both encrypted (current) and legacy plaintext data,
+     * re-encrypting any plaintext data found during migration.
      */
-    loadPersistedSessions(): void {
+    async loadPersistedSessions(): Promise<void> {
+        const keys: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key?.startsWith(PSK_STORAGE_PREFIX)) {
-                const address = key.slice(PSK_STORAGE_PREFIX.length);
-                const json = localStorage.getItem(key);
-                if (json) {
-                    try {
+                keys.push(key);
+            }
+        }
+
+        for (const key of keys) {
+            const address = key.slice(PSK_STORAGE_PREFIX.length);
+            const stored = localStorage.getItem(key);
+            if (!stored) continue;
+
+            try {
+                if (isEncryptedData(stored) || isSessionEncryptedData(stored)) {
+                    // Data is already encrypted -- decrypt it
+                    const json = await decryptFromStorage(stored);
+                    if (json) {
                         const state = deserializePSKState(json);
                         this.sessions.set(address, state);
-                    } catch {
-                        // Skip invalid data
-                        console.warn(`[PSK] Failed to load session for ${address}`);
+                    } else {
+                        // Decryption failed (session key lost or wrong password).
+                        // Leave the encrypted blob in storage for a future unlock attempt.
+                        console.warn(`[PSK] Could not decrypt session for ${address} (key unavailable)`);
                     }
+                } else {
+                    // SECURITY: Legacy plaintext data detected. Parse it and
+                    // immediately re-encrypt before proceeding.
+                    const state = deserializePSKState(stored);
+                    this.sessions.set(address, state);
+                    // Re-persist with encryption to eliminate the plaintext copy
+                    await this.persistState(address, state);
+                    console.warn(`[PSK] Migrated plaintext session for ${address} to encrypted storage`);
                 }
+            } catch {
+                console.warn(`[PSK] Failed to load session for ${address}`);
             }
         }
         this.updateActiveSessions();
@@ -206,10 +240,11 @@ export class PSKService {
         this.updateActiveSessions();
     }
 
-    private persistState(address: string, state: PSKState): void {
+    private async persistState(address: string, state: PSKState): Promise<void> {
         try {
             const json = serializePSKState(state);
-            localStorage.setItem(PSK_STORAGE_PREFIX + address, json);
+            const encrypted = await encryptForStorage(json);
+            localStorage.setItem(PSK_STORAGE_PREFIX + address, encrypted);
         } catch {
             console.warn(`[PSK] Failed to persist state for ${address}`);
         }
