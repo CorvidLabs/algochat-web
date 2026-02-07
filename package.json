@@ -8,7 +8,7 @@
     "build": "ng build",
     "build:gh-pages": "ng build --configuration github-pages",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "vitest run"
   },
   "prettier": {
     "printWidth": 100,
@@ -46,7 +46,8 @@
     "@angular/build": "^21.1.1",
     "@angular/cli": "^21.1.1",
     "@angular/compiler-cli": "^21.1.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.18"
   },
   "repository": {
     "type": "git",
