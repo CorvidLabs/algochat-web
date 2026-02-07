@@ -2,6 +2,8 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy, OnInit } 
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../core/services/wallet.service';
+import { PSKService } from '../../core/services/psk.service';
+import { ContactSettingsService } from '../../core/services/contact-settings.service';
 
 @Component({
     selector: 'app-login',
@@ -182,6 +184,8 @@ import { WalletService } from '../../core/services/wallet.service';
 })
 export class LoginComponent implements OnInit {
     private readonly wallet = inject(WalletService);
+    private readonly pskService = inject(PSKService);
+    private readonly contactSettings = inject(ContactSettingsService);
     private readonly router = inject(Router);
 
     // Login form
@@ -248,6 +252,16 @@ export class LoginComponent implements OnInit {
         this.connecting.set(false);
 
         if (success) {
+            // If connecting with "Remember me", re-initialize encrypted services
+            // to upgrade any session-encrypted PSK/contact data to password-based
+            // encryption for cross-tab persistence.
+            if (remember && pwd) {
+                await Promise.all([
+                    this.pskService.reinitialize(),
+                    this.contactSettings.reinitialize(),
+                ]);
+            }
+
             this.router.navigate(['/chat']);
         } else {
             this.error.set('Failed to connect. Please check your mnemonic.');
@@ -278,6 +292,16 @@ export class LoginComponent implements OnInit {
 
         if (success) {
             this.unlockAttempts = 0;
+
+            // Re-initialize encrypted services now that password context is set.
+            // This ensures PSK keys and contacts encrypted with the password can
+            // be decrypted, and any session-encrypted data from the same tab is
+            // upgraded to password encryption for cross-tab persistence.
+            await Promise.all([
+                this.pskService.reinitialize(),
+                this.contactSettings.reinitialize(),
+            ]);
+
             this.router.navigate(['/chat']);
         } else {
             this.unlockAttempts++;

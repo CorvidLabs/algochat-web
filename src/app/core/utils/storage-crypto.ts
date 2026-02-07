@@ -282,17 +282,53 @@ export async function encryptForStorage(plaintext: string): Promise<string> {
 
 /**
  * Decrypts data from storage.
- * Tries password decryption first (if context set), then session decryption.
- * Returns null if decryption fails.
+ * Tries all available decryption methods:
+ * 1. Password decryption (if password context is set and data has a salt)
+ * 2. Session key decryption (for session-encrypted data)
+ * Returns null if all methods fail.
  */
 export async function decryptFromStorage(encrypted: string): Promise<string | null> {
-    // Check if it's password-encrypted data (has salt)
+    // Try password decryption for password-encrypted data
     if (isEncryptedData(encrypted) && cachedPassword) {
-        return decryptWithPassword(encrypted, cachedPassword);
+        const result = await decryptWithPassword(encrypted, cachedPassword);
+        if (result) return result;
     }
-    // Check if it's session-encrypted data
+
+    // Try session decryption for session-encrypted data
     if (isSessionEncryptedData(encrypted)) {
-        return decryptFromSession(encrypted);
+        const result = await decryptFromSession(encrypted);
+        if (result) return result;
     }
+
     return null;
+}
+
+/**
+ * Re-encrypts a localStorage value with the current encryption mode.
+ * Call this after the encryption context changes (e.g. after password unlock)
+ * to upgrade session-encrypted data to password-encrypted data, ensuring it
+ * survives across tabs and browser restarts.
+ *
+ * Returns true if the value was successfully re-encrypted.
+ */
+export async function reEncryptStorageKey(storageKey: string): Promise<boolean> {
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return false;
+
+    // Determine if the stored data needs re-encryption.
+    // If we have a password context and data is session-encrypted, upgrade it.
+    // If we DON'T have a password and data is password-encrypted, we can't
+    // downgrade (we don't have the password to decrypt), so leave it alone.
+    if (cachedPassword && isSessionEncryptedData(stored)) {
+        // Session-encrypted → try to decrypt with current session key
+        const plaintext = await decryptFromSession(stored);
+        if (plaintext) {
+            // Re-encrypt with password
+            const reEncrypted = await encryptWithPassword(plaintext, cachedPassword);
+            localStorage.setItem(storageKey, reEncrypted);
+            return true;
+        }
+    }
+
+    return false;
 }
