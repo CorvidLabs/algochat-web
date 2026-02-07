@@ -1,8 +1,22 @@
 /* NES.css */
 @import 'nes.css/css/nes.min.css';
 
-/* Press Start 2P font */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* Dogica Pixel font (OFL licensed) */
+@font-face {
+    font-family: 'Dogica Pixel';
+    src: url('/fonts/dogicapixel.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Dogica Pixel';
+    src: url('/fonts/dogicapixelbold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
 
 // ============================================
 // Theme Variables (CorvidLabs Style)
@@ -118,11 +132,16 @@ html, body {
 }
 
 body {
-    font-family: 'Press Start 2P', cursive;
+    font-family: 'Dogica Pixel', cursive;
     font-size: 16px;
     line-height: 1.8;
     background: var(--theme-primary-bg);
     color: var(--theme-primary-text);
+
+    // Override NES.css "Press Start 2P" on all elements
+    *, *::before, *::after {
+        font-family: inherit;
+    }
 }
 
 // ============================================
@@ -157,7 +176,7 @@ body {
 }
 
 .nes-btn {
-    font-family: 'Press Start 2P', cursive;
+    font-family: 'Dogica Pixel', cursive;
     font-size: 14px;
     color: var(--theme-primary-text);
     background-color: var(--theme-secondary-bg);
@@ -224,7 +243,7 @@ body {
 
 .nes-input,
 .nes-textarea {
-    font-family: 'Press Start 2P', cursive;
+    font-family: 'Dogica Pixel', cursive;
     font-size: 14px;
     background-color: var(--theme-primary-bg);
     color: var(--theme-primary-text);
@@ -1373,7 +1392,7 @@ i.nes-icon {
 
 .legal-content {
     code {
-        font-family: 'Press Start 2P', monospace;
+        font-family: 'Dogica Pixel', monospace;
         font-size: 8px;
         color: var(--theme-primary);
         background: rgba(0, 0, 0, 0.3);
