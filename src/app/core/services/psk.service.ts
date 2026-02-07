@@ -23,6 +23,8 @@ import {
     decryptFromStorage,
     isEncryptedData,
     isSessionEncryptedData,
+    hasPasswordContext,
+    reEncryptStorageKey,
 } from '../utils/storage-crypto';
 import { NetworkService } from './network.service';
 
@@ -57,6 +59,29 @@ export class PSKService {
     async initialize(): Promise<void> {
         if (this.initialized) return;
         await this.migrateLegacyStorage();
+        await this.load();
+        this.initialized = true;
+    }
+
+    /**
+     * Re-initializes PSK storage after the encryption context changes.
+     *
+     * Call this after `unlockWithPassword()` so that:
+     * 1. PSK data encrypted with the old session key can be re-read (if the
+     *    tab's session key is still valid — same tab unlock).
+     * 2. Session-encrypted data is upgraded to password-encrypted data so it
+     *    persists across tabs and browser restarts.
+     */
+    async reinitialize(): Promise<void> {
+        this.initialized = false;
+        this.savePromise = null;
+
+        // Try to upgrade session-encrypted PSK data to password encryption
+        // (only works if called from the same tab that created the data).
+        if (hasPasswordContext()) {
+            await reEncryptStorageKey(this.storageKey);
+        }
+
         await this.load();
         this.initialized = true;
     }
@@ -163,11 +188,19 @@ export class PSKService {
                 const decrypted = await decryptFromStorage(stored);
                 if (decrypted) {
                     this._entries.set(JSON.parse(decrypted));
+
+                    // If the data was session-encrypted and we now have a
+                    // password context, re-save to upgrade to password encryption
+                    // so the data persists across tabs and browser restarts.
+                    if (isSessionEncryptedData(stored) && hasPasswordContext()) {
+                        this.save();
+                    }
                 } else {
                     // Decryption failed (session key lost or wrong password).
                     // Do NOT fall back to parsing as JSON -- that would only
                     // succeed if the data were plaintext, which we must not
                     // silently accept.
+                    console.warn('[AlgoChat] PSK decryption failed — data may be from another tab/session');
                     this._entries.set({});
                 }
             } else {

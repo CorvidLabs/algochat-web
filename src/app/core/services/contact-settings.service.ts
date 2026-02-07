@@ -4,6 +4,8 @@ import {
     decryptFromStorage,
     isEncryptedData,
     isSessionEncryptedData,
+    hasPasswordContext,
+    reEncryptStorageKey,
 } from '../utils/storage-crypto';
 
 export interface ContactSettings {
@@ -33,6 +35,23 @@ export class ContactSettingsService {
         this.initialized = true;
     }
 
+    /**
+     * Re-initializes contact settings after the encryption context changes.
+     * Call this after `unlockWithPassword()` to re-decrypt data that may
+     * have been encrypted with a session key in a previous tab.
+     */
+    async reinitialize(): Promise<void> {
+        this.initialized = false;
+        this.savePromise = null;
+
+        if (hasPasswordContext()) {
+            await reEncryptStorageKey(ContactSettingsService.STORAGE_KEY);
+        }
+
+        await this.load();
+        this.initialized = true;
+    }
+
     private async load(): Promise<void> {
         try {
             const stored = localStorage.getItem(ContactSettingsService.STORAGE_KEY);
@@ -46,6 +65,11 @@ export class ContactSettingsService {
                 const decrypted = await decryptFromStorage(stored);
                 if (decrypted) {
                     this._settings.set(JSON.parse(decrypted));
+
+                    // Upgrade session-encrypted data to password encryption
+                    if (isSessionEncryptedData(stored) && hasPasswordContext()) {
+                        this.save();
+                    }
                 } else {
                     // Decryption failed (wrong password or session key lost)
                     // Start fresh but don't delete - might unlock later
