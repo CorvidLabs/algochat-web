@@ -1,6 +1,7 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { WalletService } from './wallet.service';
 import { PSKService } from './psk.service';
+import { NetworkService } from './network.service';
 import algosdk from 'algosdk';
 import {
     AlgorandService,
@@ -20,13 +21,6 @@ import {
     type ConversationData as Conversation,
 } from '@corvidlabs/ts-algochat';
 
-const MAINNET_CONFIG = {
-    algodToken: '',
-    algodServer: 'https://mainnet-api.algonode.cloud',
-    indexerToken: '',
-    indexerServer: 'https://mainnet-idx.algonode.cloud',
-};
-
 /** Extract indexer transaction fields safely (algosdk v3 uses index signatures). */
 function txField<Result>(tx: unknown, field: string): Result {
     return (tx as Record<string, unknown>)[field] as Result;
@@ -36,9 +30,30 @@ function txField<Result>(tx: unknown, field: string): Result {
 export class ChatService {
     private readonly wallet = inject(WalletService);
     private readonly pskService = inject(PSKService);
-    private readonly algorand = new AlgorandService(MAINNET_CONFIG);
-    private readonly algodClient = new algosdk.Algodv2('', MAINNET_CONFIG.algodServer, '');
-    private readonly indexerClient = new algosdk.Indexer('', MAINNET_CONFIG.indexerServer, '');
+    private readonly networkService = inject(NetworkService);
+
+    private algorand!: AlgorandService;
+    private algodClient!: algosdk.Algodv2;
+    private indexerClient!: algosdk.Indexer;
+
+    constructor() {
+        // Initialize clients from current network config
+        this.rebuildClients();
+
+        // Re-create clients whenever the network changes
+        effect(() => {
+            // Read the signal to subscribe
+            this.networkService.config();
+            this.rebuildClients();
+        });
+    }
+
+    private rebuildClients(): void {
+        const cfg = this.networkService.config();
+        this.algorand = new AlgorandService(cfg);
+        this.algodClient = new algosdk.Algodv2('', cfg.algodServer, '');
+        this.indexerClient = new algosdk.Indexer('', cfg.indexerServer, '');
+    }
 
     readonly loading = signal(false);
     readonly error = signal<string | null>(null);
