@@ -548,6 +548,192 @@ i.nes-icon {
 }
 
 // ============================================
+// Per-Message Copy Button
+// ============================================
+
+.copy-msg-btn {
+    background: transparent;
+    border: 1px solid var(--theme-border-color);
+    color: var(--theme-secondary-text);
+    font-family: inherit;
+    font-size: 8px;
+    padding: 1px 5px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+    line-height: 1.2;
+    min-width: 0;
+    min-height: 0;
+
+    &:hover {
+        color: var(--theme-primary);
+        border-color: var(--theme-primary);
+    }
+}
+
+.message-bubble:hover .copy-msg-btn {
+    opacity: 1;
+}
+
+// ============================================
+// Markdown Content Styles
+// ============================================
+
+.md-content {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+    color: inherit;
+    word-break: break-word;
+
+    // Override white-space: pre-wrap from .message-content
+    white-space: normal;
+
+    // Headings
+    .md-h {
+        font-weight: bold;
+        margin: 0.5em 0 0.25em;
+        color: var(--theme-warning);
+    }
+
+    .md-h1 { font-size: 1.4em; }
+    .md-h2 { font-size: 1.25em; }
+    .md-h3 { font-size: 1.1em; }
+    .md-h4 { font-size: 1em; }
+    .md-h5 { font-size: 0.9em; }
+    .md-h6 { font-size: 0.85em; }
+
+    // Bold & Italic
+    strong { color: var(--theme-primary-text); font-weight: bold; }
+    em { font-style: italic; }
+    del { text-decoration: line-through; opacity: 0.7; }
+
+    // Inline code
+    code {
+        font-family: 'Dogica Pixel', monospace;
+        font-size: 0.85em;
+        color: var(--theme-primary);
+        background: rgba(0, 0, 0, 0.35);
+        padding: 1px 4px;
+        border: 1px solid var(--theme-border-color);
+    }
+
+    // Code blocks
+    .md-codeblock {
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid var(--theme-border-color);
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+
+        code {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 0.85em;
+            line-height: 1.8;
+            color: var(--theme-primary);
+        }
+    }
+
+    // Links
+    .md-link {
+        color: var(--theme-primary);
+        text-decoration: underline;
+        text-decoration-style: dotted;
+
+        &:hover {
+            color: var(--theme-primary-accent);
+            text-decoration-style: solid;
+        }
+    }
+
+    // Blockquotes
+    .md-blockquote {
+        border-left: 4px solid var(--theme-primary-accent);
+        padding: 0.5rem 0.75rem;
+        margin: 0.5rem 0;
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--theme-secondary-text);
+        font-style: italic;
+    }
+
+    // Horizontal rule
+    .md-hr {
+        border: none;
+        border-top: 2px solid var(--theme-border-color);
+        margin: 0.75rem 0;
+    }
+
+    // Lists
+    .md-list {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+
+        li {
+            margin-bottom: 0.25rem;
+        }
+    }
+
+    ul.md-list {
+        list-style: square;
+    }
+
+    ol.md-list {
+        list-style: decimal;
+    }
+
+    // Tables
+    .md-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.5rem 0;
+        font-size: 0.85em;
+
+        th, td {
+            border: 2px solid var(--theme-border-color);
+            padding: 0.4rem 0.6rem;
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--theme-warning);
+            font-weight: bold;
+        }
+
+        td {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        tr:hover td {
+            background: rgba(0, 0, 0, 0.25);
+        }
+    }
+}
+
+// Mobile: Smaller markdown
+@media (max-width: 768px) {
+    .md-content {
+        font-size: 12px;
+
+        .md-codeblock {
+            padding: 0.5rem;
+            font-size: 10px;
+        }
+
+        .md-table {
+            font-size: 9px;
+
+            th, td {
+                padding: 0.2rem 0.3rem;
+            }
+        }
+    }
+}
+
+// ============================================
 // Conversation List
 // ============================================
 

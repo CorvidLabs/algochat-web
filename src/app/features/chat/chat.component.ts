@@ -8,6 +8,7 @@ import { ContactSettingsService } from '../../core/services/contact-settings.ser
 import { PSKService } from '../../core/services/psk.service';
 import { NetworkService } from '../../core/services/network.service';
 import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
+import { renderMarkdown } from '../../core/utils/markdown';
 import type { Message, ConversationData as Conversation } from '@corvidlabs/ts-algochat';
 import QRCode from 'qrcode';
 
@@ -222,8 +223,13 @@ import QRCode from 'qrcode';
                                         @if (msg.replyContext) {
                                             <div class="reply-quote">{{ msg.replyContext.preview }}</div>
                                         }
-                                        <p class="message-content">{{ msg.content }}</p>
+                                        <div class="message-content md-content" [innerHTML]="renderMd(msg.content)"></div>
                                         <div class="message-footer">
+                                            <button
+                                                class="copy-msg-btn"
+                                                [title]="copiedMsgId() === msg.id ? 'Copied!' : 'Copy message'"
+                                                (click)="copyMessage(msg)"
+                                            >{{ copiedMsgId() === msg.id ? '✓' : 'cp' }}</button>
                                             @if (isProtocolPSK(msg)) {
                                                 <span class="protocol-badge psk" title="Encrypted with ECDH + Pre-Shared Key (v1.1)">
                                                     &#x1f6e1; Secured
@@ -544,6 +550,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     private lastSeenMessageId: string | null = null;
     private isNearBottom = true;
 
+    // Copy-to-clipboard feedback
+    protected readonly copiedMsgId = signal<string | null>(null);
+
     private static readonly SELECTED_CONVO_KEY = 'algochat_selected_conversation';
 
     protected readonly blockedCount = computed(() => {
@@ -860,6 +869,22 @@ export class ChatComponent implements OnInit, OnDestroy {
             });
             this.failedMessages.update((set) => new Set(set).add(tempId));
         }
+    }
+
+    /** Render message content as markdown HTML. */
+    protected renderMd(content: string): string {
+        return renderMarkdown(content);
+    }
+
+    /** Copy a message's raw content to the clipboard. */
+    protected async copyMessage(msg: Message): Promise<void> {
+        await navigator.clipboard.writeText(msg.content);
+        this.copiedMsgId.set(msg.id);
+        setTimeout(() => {
+            if (this.copiedMsgId() === msg.id) {
+                this.copiedMsgId.set(null);
+            }
+        }, 1500);
     }
 
     protected isPending(msg: Message): boolean {
