@@ -1,6 +1,6 @@
 # algochat-web
 
-[![Deploy](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat-web/deploy.yml?label=Deploy&branch=main)](https://github.com/CorvidLabs/algochat-web/actions/workflows/deploy.yml)
+[![Deploy](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat-web/CD.yml?label=Deploy&branch=main)](https://github.com/CorvidLabs/algochat-web/actions/workflows/CD.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat-web)](https://github.com/CorvidLabs/algochat-web/blob/main/LICENSE)
 
 End-to-end encrypted messaging on Algorand. Built with Angular and NES.css.
