@@ -1,3 +1,16 @@
+/**
+ * PSK Storage Service
+ *
+ * Manages persistent storage of pre-shared keys and their counter state.
+ *
+ * SECURITY: PSK entries (including the base64-encoded key material) are
+ * encrypted with AES-GCM before being written to localStorage. The encryption
+ * key is either derived from the user's password (PBKDF2, "Remember me" mode)
+ * or is a random session key held only in memory (lost when the tab closes).
+ *
+ * Legacy plaintext data is automatically migrated to encrypted form on first
+ * load. See storage-crypto.ts for implementation details.
+ */
 import { Injectable, signal } from '@angular/core';
 import {
     createPSKState,
@@ -13,7 +26,7 @@ import {
 } from '../utils/storage-crypto';
 
 interface PSKEntry {
-    psk: string; // base64-encoded 32-byte key
+    psk: string; // base64-encoded 32-byte key (encrypted at rest in localStorage)
     state: SerializedPSKState;
 }
 
@@ -115,9 +128,17 @@ export class PSKService {
                 if (decrypted) {
                     this._entries.set(JSON.parse(decrypted));
                 } else {
+                    // Decryption failed (session key lost or wrong password).
+                    // Do NOT fall back to parsing as JSON -- that would only
+                    // succeed if the data were plaintext, which we must not
+                    // silently accept.
                     this._entries.set({});
                 }
             } else {
+                // SECURITY: Legacy plaintext PSK data found in localStorage.
+                // This is a migration path only -- parse, load into memory,
+                // and immediately re-encrypt to eliminate the plaintext copy.
+                console.warn('[AlgoChat] Migrating plaintext PSK data to encrypted storage');
                 const data = JSON.parse(stored);
                 this._entries.set(data);
                 this.save();

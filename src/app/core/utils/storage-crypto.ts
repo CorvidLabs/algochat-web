@@ -2,6 +2,37 @@
  * Storage Crypto - AES-GCM encryption for localStorage
  *
  * Uses Web Crypto API with PBKDF2 key derivation for secure storage.
+ *
+ * SECURITY OVERVIEW
+ * =================
+ * This module protects sensitive data (PSK keys, wallet mnemonics, contacts)
+ * that must survive in browser storage. Two modes are supported:
+ *
+ * 1. **Password mode ("Remember me")** -- Data is encrypted with AES-256-GCM
+ *    using a key derived from the user's password via PBKDF2 (100 000 iterations,
+ *    SHA-256). A fresh random salt and IV are generated for each encryption.
+ *    Data persists across tabs and browser restarts; the password must be
+ *    re-entered to decrypt.
+ *
+ * 2. **Session mode (default)** -- Data is encrypted with AES-256-GCM using a
+ *    random CryptoKey generated once per tab and held only in memory (the key
+ *    is non-extractable). Data encrypted this way becomes unrecoverable once
+ *    the tab or page is closed, providing forward secrecy for transient sessions.
+ *
+ * LIMITATIONS / KNOWN RISKS
+ * -------------------------
+ * - **XSS**: If an attacker achieves script execution in the page context they
+ *   can call `decryptFromStorage()` while the session key or password context
+ *   is live, thereby recovering plaintext secrets. Encryption-at-rest mitigates
+ *   passive inspection of localStorage (e.g. browser extensions, shared
+ *   machines) but is NOT a defence against active XSS.
+ *
+ * - **Session key lifetime**: The in-memory session key lives for the duration
+ *   of the tab. Users should be encouraged to close the tab / disconnect when
+ *   they are finished to minimise the window of exposure.
+ *
+ * - All callers storing key material MUST use `encryptForStorage()` /
+ *   `decryptFromStorage()` rather than writing to localStorage directly.
  */
 
 const PBKDF2_ITERATIONS = 100_000;
