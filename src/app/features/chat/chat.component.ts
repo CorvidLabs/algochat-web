@@ -6,6 +6,7 @@ import { WalletService } from '../../core/services/wallet.service';
 import { ChatService } from '../../core/services/chat.service';
 import { ContactSettingsService } from '../../core/services/contact-settings.service';
 import { PSKService } from '../../core/services/psk.service';
+import { NetworkService } from '../../core/services/network.service';
 import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
 import type { Message, ConversationData as Conversation } from '@corvidlabs/ts-algochat';
 import QRCode from 'qrcode';
@@ -36,6 +37,17 @@ import QRCode from 'qrcode';
                                     <a href="https://github.com/CorvidLabs/algochat-web" target="_blank" class="info-menu-item">GitHub</a>
                                 </div>
                             }
+                        </div>
+                        <div class="network-toggle">
+                            <button
+                                class="nes-btn network-btn"
+                                [class.is-testnet]="networkService.isTestnet()"
+                                [class.is-mainnet]="networkService.isMainnet()"
+                                [title]="'Switch to ' + (networkService.isMainnet() ? 'testnet' : 'mainnet')"
+                                (click)="switchNetwork()"
+                            >
+                                {{ networkService.isTestnet() ? 'TESTNET' : 'MAINNET' }}
+                            </button>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
@@ -491,6 +503,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     protected readonly contactSettings = inject(ContactSettingsService);
     protected readonly pskService = inject(PSKService);
+    protected readonly networkService = inject(NetworkService);
     private readonly cdr = inject(ChangeDetectorRef);
 
     private readonly messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
@@ -913,6 +926,16 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.selectConversation(newConv);
         this.showNewChat.set(false);
         this.newChatAddress.set('');
+    }
+
+    protected async switchNetwork(): Promise<void> {
+        this.networkService.toggle();
+        // Reload data for the new network
+        this.conversations.set([]);
+        this.selectedMessages.set([]);
+        this.selectedAddress.set(null);
+        localStorage.removeItem(ChatComponent.SELECTED_CONVO_KEY);
+        await this.loadData();
     }
 
     protected disconnect(): void {

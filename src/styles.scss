@@ -753,6 +753,33 @@ i.nes-icon {
     color: var(--theme-border-color);
 }
 
+// Network toggle in header
+.network-toggle {
+    display: inline-flex;
+}
+
+.network-btn {
+    padding: 0.2rem 0.5rem !important;
+    min-width: auto !important;
+    min-height: auto !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.5px;
+    transition: background-color 0.2s, color 0.2s;
+
+    &.is-testnet {
+        background-color: #209cee !important;
+        color: #fff !important;
+        border-color: #1a7dc4 !important;
+    }
+
+    &.is-mainnet {
+        background-color: var(--theme-success) !important;
+        color: #000 !important;
+        border-color: #6fa830 !important;
+    }
+}
+
 // Info menu in header
 .info-menu-wrapper {
     position: relative;
@@ -945,6 +972,14 @@ i.nes-icon {
         align-items: center;
         gap: 0.25rem;
         margin-right: 0.5rem;
+    }
+
+    // Smaller network toggle on mobile
+    .network-btn {
+        font-size: 6px !important;
+        padding: 0.15rem 0.3rem !important;
+        min-height: 32px !important;
+        min-width: 32px !important;
     }
 
     // Hide elements on mobile
