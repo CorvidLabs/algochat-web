@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { x25519 } from '@noble/curves/ed25519.js';
-import { deriveEncryptionKeys } from 'ts-algochat';
+import { deriveEncryptionKeys } from '@corvidlabs/ts-algochat';
 
 import { PSK_PROTOCOL, PSK_HKDF } from './psk-types';
 import {
@@ -329,7 +329,7 @@ describe('PSK Encryption Round-Trip', () => {
             0
         );
 
-        const wrongKey = x25519.utils.randomPrivateKey();
+        const wrongKey = x25519.utils.randomSecretKey();
         const wrongPub = x25519.getPublicKey(wrongKey);
 
         expect(() => {

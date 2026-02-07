@@ -9,7 +9,7 @@
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { randomBytes } from '@noble/ciphers/utils.js';
 import { x25519 } from '@noble/curves/ed25519.js';
-import { uint8ArrayEquals } from 'ts-algochat';
+import { uint8ArrayEquals } from '@corvidlabs/ts-algochat';
 import { PSK_PROTOCOL, type PSKEnvelope } from './psk-types';
 import {
     derivePSKAtCounter,
