@@ -930,6 +930,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     protected async switchNetwork(): Promise<void> {
         this.networkService.toggle();
+        // Reload PSK entries for the new network so counters match
+        await this.pskService.reloadForNetwork();
         // Reload data for the new network
         this.conversations.set([]);
         this.selectedMessages.set([]);

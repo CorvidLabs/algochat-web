@@ -11,7 +11,7 @@
  * Legacy plaintext data is automatically migrated to encrypted form on first
  * load. See storage-crypto.ts for implementation details.
  */
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import {
     createPSKState,
     createPSKExchangeURI,
@@ -24,6 +24,7 @@ import {
     isEncryptedData,
     isSessionEncryptedData,
 } from '../utils/storage-crypto';
+import { NetworkService } from './network.service';
 
 interface PSKEntry {
     psk: string; // base64-encoded 32-byte key (encrypted at rest in localStorage)
@@ -38,18 +39,53 @@ interface SerializedPSKState {
 
 @Injectable({ providedIn: 'root' })
 export class PSKService {
-    private static readonly STORAGE_KEY = 'algochat_psk';
+    private static readonly STORAGE_KEY_PREFIX = 'algochat_psk_';
+    private static readonly LEGACY_STORAGE_KEY = 'algochat_psk';
 
+    private readonly networkService = inject(NetworkService);
     private readonly _entries = signal<Record<string, PSKEntry>>({});
     private initialized = false;
     private savePromise: Promise<void> | null = null;
 
     readonly entries = this._entries.asReadonly();
 
+    /** Returns the network-scoped storage key, e.g. 'algochat_psk_testnet'. */
+    private get storageKey(): string {
+        return PSKService.STORAGE_KEY_PREFIX + this.networkService.network();
+    }
+
     async initialize(): Promise<void> {
         if (this.initialized) return;
+        await this.migrateLegacyStorage();
         await this.load();
         this.initialized = true;
+    }
+
+    /**
+     * Reloads PSK entries for the current network.
+     * Call this after switching networks so counters match the new chain.
+     */
+    async reloadForNetwork(): Promise<void> {
+        this.savePromise = null;
+        await this.load();
+    }
+
+    /**
+     * Migrates the old non-network-scoped 'algochat_psk' key to the current
+     * network's scoped key. Existing data is assumed to be testnet (the former default).
+     * The legacy key is removed after migration.
+     */
+    private async migrateLegacyStorage(): Promise<void> {
+        const legacy = localStorage.getItem(PSKService.LEGACY_STORAGE_KEY);
+        if (!legacy) return;
+
+        // Only migrate if the target (testnet) key doesn't already exist
+        const targetKey = PSKService.STORAGE_KEY_PREFIX + 'testnet';
+        if (!localStorage.getItem(targetKey)) {
+            localStorage.setItem(targetKey, legacy);
+            console.warn('[AlgoChat] Migrated legacy PSK data to network-scoped key:', targetKey);
+        }
+        localStorage.removeItem(PSKService.LEGACY_STORAGE_KEY);
     }
 
     generatePSK(): Uint8Array {
@@ -111,13 +147,13 @@ export class PSKService {
 
     clear(): void {
         this._entries.set({});
-        localStorage.removeItem(PSKService.STORAGE_KEY);
+        localStorage.removeItem(this.storageKey);
         this.initialized = false;
     }
 
     private async load(): Promise<void> {
         try {
-            const stored = localStorage.getItem(PSKService.STORAGE_KEY);
+            const stored = localStorage.getItem(this.storageKey);
             if (!stored) {
                 this._entries.set({});
                 return;
@@ -153,7 +189,7 @@ export class PSKService {
             try {
                 const data = JSON.stringify(this._entries());
                 const encrypted = await encryptForStorage(data);
-                localStorage.setItem(PSKService.STORAGE_KEY, encrypted);
+                localStorage.setItem(this.storageKey, encrypted);
             } catch (err) {
                 console.error('[AlgoChat] Failed to save PSK data:', err);
             }
