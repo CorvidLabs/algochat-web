@@ -31,7 +31,7 @@
     "@angular/forms": "^21.1.0",
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
-    "@corvidlabs/ts-algochat": "0.2.0",
+    "@corvidlabs/ts-algochat": "0.3.0",
     "@noble/ciphers": "^2.1.1",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
