@@ -11,7 +11,7 @@
         "@angular/forms": "^21.1.0",
         "@angular/platform-browser": "^21.1.0",
         "@angular/router": "^21.1.0",
-        "@corvidlabs/ts-algochat": "0.2.0",
+        "@corvidlabs/ts-algochat": "0.3.0",
         "@noble/ciphers": "^2.1.1",
         "@noble/curves": "^2.0.1",
         "@noble/hashes": "^2.0.1",
@@ -122,7 +122,7 @@
 
     "@babel/types": ["@babel/types@7.28.6", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg=="],
 
-    "@corvidlabs/ts-algochat": ["@corvidlabs/ts-algochat@0.2.0", "", { "dependencies": { "@noble/ciphers": "^1.0.0", "@noble/curves": "^1.7.0", "@noble/hashes": "^1.6.0", "algosdk": "^3.0.0" } }, "sha512-d13wBrBrWVMMs4lkZkydqP2v60kb66PtO+Ds+qOUSzEiMZKIEda1t0+JDGFAgqri0Co01oLY/8TR4ALcpiisXw=="],
+    "@corvidlabs/ts-algochat": ["@corvidlabs/ts-algochat@0.3.0", "", { "dependencies": { "@noble/ciphers": "^1.0.0", "@noble/curves": "^1.7.0", "@noble/hashes": "^1.6.0", "algosdk": "^3.0.0" } }, "sha512-M8uTtZW+yuxWw077lMecGB/bqmHRXxAp9Uw/MF9PWg9YCHfXzLj58jdp9HVLjiXyMkBf9QNamAMQbFY/LoMqog=="],
 
     "@emnapi/core": ["@emnapi/core@1.8.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.1.0", "tslib": "^2.4.0" } }, "sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg=="],
 
