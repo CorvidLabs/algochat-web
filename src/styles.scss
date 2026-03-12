@@ -1160,6 +1160,21 @@ i.nes-icon {
         margin-right: 0.5rem;
     }
 
+    // Smaller sidebar tabs on mobile
+    .sidebar-tab {
+        font-size: 8px;
+        padding: 0.4rem 0.2rem;
+    }
+
+    .contacts-add-form .nes-input {
+        min-height: 36px;
+    }
+
+    .contact-item {
+        padding: 0.75rem 0.5rem;
+        min-height: 48px;
+    }
+
     // Smaller network toggle on mobile
     .network-btn {
         font-size: 6px !important;
@@ -1434,6 +1449,186 @@ i.nes-icon {
             width: 100%;
         }
     }
+}
+
+// ============================================
+// Sidebar Tabs (Chats / Contacts)
+// ============================================
+
+.sidebar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.sidebar-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--theme-secondary-text);
+    font-family: 'Dogica Pixel', cursive;
+    font-size: 10px;
+    padding: 0.5rem 0.25rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+
+    &:hover {
+        color: var(--theme-primary-text);
+    }
+
+    &.active {
+        color: var(--theme-warning);
+        border-bottom-color: var(--theme-warning);
+    }
+}
+
+.sidebar-tab-action {
+    flex: 0 0 auto;
+    margin-left: 0.25rem;
+}
+
+// ============================================
+// Contacts List
+// ============================================
+
+.contacts-list-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 0 0.5rem;
+}
+
+.contacts-search {
+    .nes-input {
+        font-size: 10px !important;
+        padding: 0.4rem;
+    }
+}
+
+.contacts-add-btn {
+    font-size: 10px !important;
+    padding: 0.4rem !important;
+    min-height: 32px !important;
+}
+
+.contacts-add-form {
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--theme-border-color);
+
+    .nes-field {
+        margin-bottom: 0.5rem;
+
+        label {
+            margin-bottom: 0.25rem;
+            font-size: 8px;
+        }
+    }
+
+    .nes-input {
+        font-size: 10px !important;
+        min-height: 32px;
+    }
+
+    .nes-btn {
+        font-size: 10px !important;
+        min-height: 32px !important;
+    }
+}
+
+.contacts-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid var(--theme-border-color);
+    transition: background 0.2s;
+    gap: 0.5rem;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.blocked {
+        opacity: 0.5;
+    }
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-name {
+    font-size: 11px;
+    color: var(--theme-primary-text);
+    margin: 0;
+}
+
+.contact-address {
+    margin: 0;
+    font-size: 8px;
+}
+
+.contact-badges {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.contact-badge {
+    font-size: 7px;
+    padding: 1px 4px;
+    border: 1px solid var(--theme-border-color);
+    color: var(--theme-secondary-text);
+
+    &.psk {
+        background: rgba(146, 204, 65, 0.15);
+        color: var(--theme-success);
+        border-color: var(--theme-success);
+    }
+
+    &.muted {
+        color: var(--theme-warning);
+        border-color: var(--theme-warning);
+    }
+
+    &.blocked {
+        color: var(--theme-error);
+        border-color: var(--theme-error);
+    }
+}
+
+.contact-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+
+    .nes-btn {
+        font-size: 8px !important;
+        padding: 0.2rem 0.4rem !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+    }
+}
+
+.contacts-count {
+    border-top: 2px solid var(--theme-border-color);
+    text-align: center;
+    font-size: 8px;
+}
+
+.hidden {
+    display: none !important;
 }
 
 // ============================================
