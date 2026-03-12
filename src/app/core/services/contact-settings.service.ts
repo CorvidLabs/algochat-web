@@ -228,6 +228,18 @@ export class ContactSettingsService {
             .map(([address]) => address);
     }
 
+    getAllAddresses(): string[] {
+        return Object.keys(this._settings());
+    }
+
+    removeContact(address: string): void {
+        this._settings.update(settings => {
+            const { [address]: _, ...remaining } = settings;
+            return remaining;
+        });
+        this.save();
+    }
+
     clear(): void {
         this._settings.set({});
         localStorage.removeItem(ContactSettingsService.STORAGE_KEY);
