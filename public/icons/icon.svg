@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      .bg { fill: #1a1a2e; }
+      .bubble { fill: #e94560; }
+      .dot { fill: #1a1a2e; }
+      .chain { fill: #0f3460; }
+    </style>
+  </defs>
+  <!-- Background -->
+  <rect class="bg" width="512" height="512" rx="64"/>
+  <!-- Chat bubble (pixel-art style using rects) -->
+  <!-- Top row -->
+  <rect class="bubble" x="128" y="112" width="256" height="32"/>
+  <!-- Body rows -->
+  <rect class="bubble" x="96" y="144" width="320" height="32"/>
+  <rect class="bubble" x="96" y="176" width="320" height="32"/>
+  <rect class="bubble" x="96" y="208" width="320" height="32"/>
+  <rect class="bubble" x="96" y="240" width="320" height="32"/>
+  <rect class="bubble" x="128" y="272" width="256" height="32"/>
+  <!-- Tail -->
+  <rect class="bubble" x="128" y="304" width="64" height="32"/>
+  <rect class="bubble" x="96" y="336" width="64" height="32"/>
+  <!-- Typing dots -->
+  <rect class="dot" x="176" y="192" width="32" height="32" rx="4"/>
+  <rect class="dot" x="240" y="192" width="32" height="32" rx="4"/>
+  <rect class="dot" x="304" y="192" width="32" height="32" rx="4"/>
+  <!-- Algorand chain link (bottom right) -->
+  <rect class="chain" x="288" y="384" width="128" height="16"/>
+  <rect class="chain" x="304" y="368" width="16" height="48"/>
+  <rect class="chain" x="384" y="368" width="16" height="48"/>
+  <rect class="chain" x="336" y="384" width="16" height="32"/>
+  <rect class="chain" x="352" y="400" width="16" height="16"/>
+</svg>
