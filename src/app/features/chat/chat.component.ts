@@ -8,13 +8,14 @@ import { ContactSettingsService } from '../../core/services/contact-settings.ser
 import { PSKService } from '../../core/services/psk.service';
 import { NetworkService } from '../../core/services/network.service';
 import { ContactSettingsDialogComponent } from './contact-settings-dialog.component';
+import { ContactsListComponent } from './contacts-list.component';
 import { renderMarkdown } from '../../core/utils/markdown';
 import type { Message, ConversationData as Conversation } from '@corvidlabs/ts-algochat';
 import QRCode from 'qrcode';
 
 @Component({
     selector: 'app-chat',
-    imports: [FormsModule, DatePipe, RouterLink, ContactSettingsDialogComponent],
+    imports: [FormsModule, DatePipe, RouterLink, ContactSettingsDialogComponent, ContactsListComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="app-container">
@@ -103,14 +104,32 @@ import QRCode from 'qrcode';
                 <!-- Sidebar -->
                 <aside class="sidebar" [class.mobile-hidden]="selectedAddress()" [class.hidden]="isFullscreen()">
                     <section class="nes-container is-dark is-rounded h-full flex flex-col overflow-hidden">
-                        <div class="flex items-center justify-between mb-1 p-1">
-                            <span class="text-sm text-warning">Chats</span>
-                            <button class="nes-btn is-primary" (click)="showNewChat.set(true)">
-                                <i class="nes-icon is-small star"></i>
-                            </button>
+                        <div class="sidebar-tabs mb-1 p-1">
+                            <button
+                                class="sidebar-tab"
+                                [class.active]="sidebarTab() === 'chats'"
+                                (click)="sidebarTab.set('chats')"
+                            >Chats</button>
+                            <button
+                                class="sidebar-tab"
+                                [class.active]="sidebarTab() === 'contacts'"
+                                (click)="sidebarTab.set('contacts')"
+                            >Contacts</button>
+                            @if (sidebarTab() === 'chats') {
+                                <button class="nes-btn is-primary sidebar-tab-action" (click)="showNewChat.set(true)">
+                                    <i class="nes-icon is-small star"></i>
+                                </button>
+                            }
                         </div>
 
-                        <div class="flex-1 overflow-auto">
+                        @if (sidebarTab() === 'contacts') {
+                            <app-contacts-list
+                                (openChat)="openChatFromContacts($event)"
+                                (openSettings)="openContactSettings($event)"
+                            />
+                        }
+
+                        <div class="flex-1 overflow-auto" [class.hidden]="sidebarTab() !== 'chats'">
                             @for (conv of filteredConversations(); track conv.participant) {
                                 <div
                                     class="conversation-item"
@@ -552,6 +571,9 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     // Copy-to-clipboard feedback
     protected readonly copiedMsgId = signal<string | null>(null);
+
+    // Sidebar tab
+    protected readonly sidebarTab = signal<'chats' | 'contacts'>('chats');
 
     private static readonly SELECTED_CONVO_KEY = 'algochat_selected_conversation';
 
@@ -1050,6 +1072,20 @@ export class ChatComponent implements OnInit, OnDestroy {
     protected closeContactSettings(): void {
         this.showContactSettings.set(false);
         this.contactSettingsAddress.set(null);
+    }
+
+    protected openChatFromContacts(address: string): void {
+        // Switch to chats tab and open/create conversation
+        this.sidebarTab.set('chats');
+
+        const existing = this.conversations().find(c => c.participant === address);
+        if (existing) {
+            this.selectConversation(existing);
+        } else {
+            const newConv: Conversation = { participant: address, messages: [] };
+            this.conversations.update(convs => [newConv, ...convs]);
+            this.selectConversation(newConv);
+        }
     }
 
     protected onConversationContextMenu(event: MouseEvent, address: string): void {
