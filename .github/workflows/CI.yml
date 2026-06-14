@@ -3,14 +3,39 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "src/**"
+      - "packages/**"
+      - "public/**"
+      - "package.json"
+      - "bun.lock"
+      - "angular.json"
+      - "tsconfig*.json"
+      - "vitest.config.ts"
+      - ".github/workflows/CI.yml"
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "packages/**"
+      - "public/**"
+      - "package.json"
+      - "bun.lock"
+      - "angular.json"
+      - "tsconfig*.json"
+      - "vitest.config.ts"
+      - ".github/workflows/CI.yml"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
